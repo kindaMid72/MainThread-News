@@ -1,2 +1,2 @@
-# MainThread-News
-MainThread-News is a modern web platform delivering the latest tech news automatically. Using an integrated auto-scraper, it collects articles from trusted sources, then parses and regenerates them into concise, relevant, and easy-to-read content for daily updates.
+MainThread-News is a modern web platform delivering the latest tech news automatically (well… not yet, but soon™). For now, it flexes its manual muscles — yes, we can hand‑craft and post news like old‑school editors. Later, with the integrated auto‑scraper API from @kindaMid72, it will collect articles from trusted sources, then parse and regenerate them into concise, relevant, and easy‑to‑read content for daily tech updates.
+
