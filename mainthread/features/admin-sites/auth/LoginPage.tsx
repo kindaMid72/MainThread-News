@@ -1,13 +1,14 @@
 "use client"
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createClient } from '@/utils/supabase/createBrowserClient';
 
-// types
-import { User } from '@/types/User.types';
+import { User, NewUser } from '@/types/User.types';
 
 // Impor createBrowserClient langsung dari @supabase/ssr untuk komponen klien
 export default function Login_Page() {
+    const router = useRouter();
     
     // state
     const [email, setEmail] = useState<string>('');
@@ -16,7 +17,45 @@ export default function Login_Page() {
     const [error, setError] = useState<string | null>(null); // error message
     const [loading, setLoading] = useState<boolean>(false);
 
-    const router = useRouter();
+
+    // check if user already login in
+    useEffect(() => {
+        const checkUser = async () => {
+            const supabase  = createClient;
+            const { data, error } = await supabase.auth.getSession();
+            if (data.session) {
+                router.push('/admin/dashboard');
+            }
+        };
+        checkUser();
+    }, []);
+
+    const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
+
+        try {
+            
+            const supabase = createClient;
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            });
+
+            if (error) {
+                throw error;
+            }
+
+            if (data.user) {
+                router.push('/admin/dashboard');
+            }
+        } catch (error) {
+            setError('Invalid email or password');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <div className="min-h-screen bg-gray-100  font-mono">
@@ -34,7 +73,7 @@ export default function Login_Page() {
                 {/* Right Section / Form */}
                 <div className="w-full md:w-1/2 p-8">
                     <div className="bg-white shadow-[0_0_10px_0_rgba(0,0,0,0.1)] rounded-xl p-8">
-                        <form onSubmit={() => {}} className="w-full flex flex-col space-y-4">
+                        <form onSubmit={(e) => {handleLogin(e)}} className="w-full flex flex-col space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                                 <input type='email' value={email} onChange={(e) => setEmail(e.target.value)} placeholder="your@example.com" className="w-full p-3 bg-gray-50  text-gray-900  border border-gray-300  rounded-md focus:ring-2 focus:ring-red-500 focus:border-red-500 transition" required />
