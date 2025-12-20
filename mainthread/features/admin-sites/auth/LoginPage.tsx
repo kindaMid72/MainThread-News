@@ -4,6 +4,9 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/createBrowserClient';
 
+// testing
+import testSignin from '@/testing/test';
+
 import { User, NewUser } from '@/types/User.types';
 
 // Impor createBrowserClient langsung dari @supabase/ssr untuk komponen klien
@@ -21,13 +24,14 @@ export default function Login_Page() {
     // check if user already login in
     useEffect(() => {
         const checkUser = async () => {
-            const supabase  = createClient;
+            const supabase = createClient();
             const { data, error } = await supabase.auth.getSession();
             if (data.session) {
-                router.push('/admin/dashboard');
+                router.push(`/admin/${data.session.user.id}/dashboard`);
             }
         };
-        checkUser();
+        //checkUser();
+        //testSignin(); // dont call this ever again
     }, []);
 
     const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -37,7 +41,7 @@ export default function Login_Page() {
 
         try {
             
-            const supabase = createClient;
+            const supabase = createClient();
             const { data, error } = await supabase.auth.signInWithPassword({
                 email,
                 password,
@@ -48,11 +52,11 @@ export default function Login_Page() {
             }
 
             if (data.user) {
-                router.push('/admin/dashboard');
+                router.push(`/admin/${data.user.id}/dashboard`);
             }
         } catch (error) {
             setError('Invalid email or password');
-        } finally {
+        } finally { 
             setLoading(false);
         }
     };
