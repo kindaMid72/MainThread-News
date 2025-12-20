@@ -1,7 +1,8 @@
-export default function TeamsPage() {
+
+import TeamPage from "@/features/admin-sites/teams/TeamPage";
+
+export default function Teams() {
     return (
-        <div>
-            <h1>Teams</h1>
-        </div>
+        <TeamPage />
     );
 }

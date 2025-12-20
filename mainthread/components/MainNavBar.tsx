@@ -37,7 +37,7 @@ export default function NavBar() {
     const isActive = (path: string) => pathname.includes(path);
 
     return (
-        <nav className='sticky top-0 z-50 w-full bg-white border-b border-gray-200 shadow-sm'>
+        <nav className='sticky top-0 z-50 w-full bg-white border-b border-gray-200 shadow-[0px_0px_20px_rgba(0,0,0,0.1)]'>
             <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
                 <div className='flex justify-between h-16'>
 

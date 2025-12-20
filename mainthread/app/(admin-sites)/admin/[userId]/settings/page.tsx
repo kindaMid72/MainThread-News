@@ -1,7 +1,8 @@
-export default function SettingsPage() {
+
+import SettingPage from "@/features/admin-sites/settings/SettingPage";
+
+export default function Settings() {
     return (
-        <div>
-            <h1>Settings</h1>
-        </div>
+        <SettingPage />
     );
 }
