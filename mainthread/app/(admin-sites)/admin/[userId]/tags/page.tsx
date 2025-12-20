@@ -1,7 +1,8 @@
-export default function TagsPage() {
+
+import TagsPage from "@/features/admin-sites/tags/TagsPage";
+
+export default function Tags() {
     return (
-        <div>
-            <h1>Tags</h1>
-        </div>
+        <TagsPage />
     );
 }

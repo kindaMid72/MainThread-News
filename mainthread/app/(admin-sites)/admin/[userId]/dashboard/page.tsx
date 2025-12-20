@@ -1,8 +1,9 @@
 
+// dashboard page
+import DashboardPage from "@/features/admin-sites/dashboard/DashboardPage";
+
 export default function Dashboard() {
     return (
-        <div>
-            <h1>Dashboard</h1>
-        </div>
+        <DashboardPage />
     );
 }

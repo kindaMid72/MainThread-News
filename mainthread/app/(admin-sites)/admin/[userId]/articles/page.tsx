@@ -1,8 +1,8 @@
 
-export default function ArticlesPage() {
+// import articles page
+import ArticlesPage from "@/features/admin-sites/articles/ArticlesPage";
+export default function Articles() {
     return (
-        <div>
-            <h1>Articles</h1>
-        </div>
+        <ArticlesPage />
     );
 }

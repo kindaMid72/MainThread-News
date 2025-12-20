@@ -1,7 +1,7 @@
+import CategoryPage from "@/features/admin-sites/categories/CategoryPage";
+
 export default function CategoriesPage() {
     return (
-        <div>
-            <h1>Categories</h1>
-        </div>
+        <CategoryPage />
     );
 }
