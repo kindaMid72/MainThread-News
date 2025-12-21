@@ -3,6 +3,8 @@ export interface TeamMember {
     name: string;
     email: string;
     role: 'admin' | 'superadmin' | 'writer';
-    status: 'Active' | 'Inactive';
     avatarUrl?: string;
+    isActive: boolean;
+    createdAt?: string;
+    updatedAt?: string;
 }

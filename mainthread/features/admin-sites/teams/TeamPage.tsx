@@ -4,8 +4,10 @@ import api from '@/libs/axiosInterceptor/axiosAdminInterceptor';
 
 import { TeamMember } from '@/types/TeamMember.type';
 import { Edit, Mail, Plus, X } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import OverlayTeamEditPage from './teams-subpage/OverlayTeamEditPage';
+
+const avatarUrl = (name: string) => `https://ui-avatars.com/api/?name=${name}&background=random`;
 
 // Initial mock data
 const initialTeam: TeamMember[] = [
@@ -14,7 +16,7 @@ const initialTeam: TeamMember[] = [
         name: 'Alice Johnson',
         email: 'alice@example.com',
         role: 'admin',
-        status: 'Active',
+        isActive: true,
         avatarUrl: 'https://ui-avatars.com/api/?name=Alice+Johnson&background=random'
     },
     {
@@ -22,7 +24,7 @@ const initialTeam: TeamMember[] = [
         name: 'Bob Smith',
         email: 'bob@example.com',
         role: 'writer',
-        status: 'Inactive',
+        isActive: false,
         avatarUrl: 'https://ui-avatars.com/api/?name=Bob+Smith&background=random'
     },
     {
@@ -30,7 +32,7 @@ const initialTeam: TeamMember[] = [
         name: 'Charlie Brown',
         email: 'charlie@example.com',
         role: 'superadmin',
-        status: 'Active',
+        isActive: true,
         avatarUrl: 'https://ui-avatars.com/api/?name=Charlie+Brown&background=random'
     }
 ];
@@ -38,6 +40,10 @@ const initialTeam: TeamMember[] = [
 export default function TeamPage() {
     const [team, setTeam] = useState<TeamMember[]>(initialTeam);
     const [searchTerm, setSearchTerm] = useState('');
+
+    // async state
+    const [isLoading, setIsLoading] = useState(false);
+    const [isError, setIsError] = useState(false);
 
     // Form State
     const [isAdding, setIsAdding] = useState(false);
@@ -47,19 +53,21 @@ export default function TeamPage() {
     const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
     const [isEditOverlayOpen, setIsEditOverlayOpen] = useState(false);
 
-    const filteredTeam = team.filter(member =>
-        member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        member.role.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
     // fetch data
     async function fetchData() {
-        const response = await api.get('');
-        const data = response.data;
+        setIsLoading(true);
+        try {
+            const response = await api.get(`${process.env.NEXT_PUBLIC_SERVER_API_URL}/api/admin/teams/get-all-users`);
+            const data: TeamMember[] = response.data;
 
-        // TODO: get data and config in here
-        setTeam(data);
+            console.log(data);
+            setTeam(data);
+        } catch (err) {
+            console.log(err);
+            setIsError(true);
+        } finally {
+            setIsLoading(false);
+        }
     }
 
     const handleSave = () => {
@@ -70,7 +78,7 @@ export default function TeamPage() {
             name: newUser.email.split('@')[0], // Placeholder name from email
             email: newUser.email,
             role: newUser.role as 'admin' | 'superadmin' | 'writer',
-            status: 'Active',
+            isActive: true,
             avatarUrl: `https://ui-avatars.com/api/?name=${newUser.email}&background=random`
         };
 
@@ -93,12 +101,86 @@ export default function TeamPage() {
         // TODO: implement api call to update a member, then trigger update for data fetching
         setTeam(team.map(m => m.id === updatedMember.id ? updatedMember : m));
     };
-    
+
     const handleDeleteMember = (memberId: string) => {
         // TODO: implement api call to delete member, then trigger update for data fetching
         setTeam(team.filter(m => m.id !== memberId));
     };
-    
+
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    // Skeleton Loading
+    if (isLoading) {
+        return (
+            <div className="p-6">
+                <div className="mb-8">
+                    <div className="flex items-center justify-between mb-4">
+                        <div>
+                            <div className="h-8 w-48 bg-gray-200 rounded animate-pulse mb-2"></div>
+                            <div className="h-4 w-64 bg-gray-200 rounded animate-pulse"></div>
+                        </div>
+                        <div className="h-10 w-40 bg-gray-200 rounded animate-pulse"></div>
+                    </div>
+
+                    <div className="bg-white rounded-lg shadow-sm overflow-hidden border">
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead className="bg-gray-50 border-b">
+                                    <tr>
+                                        {[1, 2, 3, 4, 5].map((i) => (
+                                            <th key={i} className="px-6 py-3">
+                                                <div className="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
+                                            </th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200">
+                                    {[1, 2, 3, 4, 5].map((row) => (
+                                        <tr key={row}>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse"></div>
+                                                    <div className="h-4 w-32 bg-gray-200 rounded animate-pulse"></div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4"><div className="h-4 w-40 bg-gray-200 rounded animate-pulse"></div></td>
+                                            <td className="px-6 py-4"><div className="h-6 w-20 bg-gray-200 rounded-full animate-pulse"></div></td>
+                                            <td className="px-6 py-4"><div className="h-6 w-20 bg-gray-200 rounded-full animate-pulse"></div></td>
+                                            <td className="px-6 py-4"><div className="h-8 w-8 bg-gray-200 rounded animate-pulse"></div></td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Error State
+    if (isError) {
+        return (
+            <div className="p-6 flex flex-col items-center justify-center min-h-[400px] text-center">
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                    <div className="w-8 h-8 text-red-600">⚠️</div>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Gagal Memuat Data</h3>
+                <p className="text-gray-500 max-w-md mb-6">
+                    Terjadi kesalahan saat menghubungi server. Mohon periksa koneksi internet Anda atau coba beberapa saat lagi.
+                </p>
+                <button
+                    onClick={() => fetchData()}
+                    className="px-6 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
+                >
+                    Coba Lagi
+                </button>
+            </div>
+        );
+    }
+
     return (
         <div className="p-6">
             <OverlayTeamEditPage
@@ -212,7 +294,7 @@ export default function TeamPage() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200">
-                                {filteredTeam.map((member) => (
+                                {team.map((member) => (
                                     <tr key={member.id} className="hover:bg-gray-50">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
@@ -241,9 +323,9 @@ export default function TeamPage() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                                ${member.status === 'Active' ? 'bg-green-100 text-green-800' :
+                                                ${member.isActive ? 'bg-green-100 text-green-800' :
                                                     'bg-red-100 text-red-800'}`}>
-                                                {member.status}
+                                                {member.isActive ? 'Active' : 'Inactive'}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">

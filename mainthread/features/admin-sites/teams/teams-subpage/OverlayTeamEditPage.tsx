@@ -121,8 +121,8 @@ export default function OverlayTeamEditPage({ isOpen, onClose, member, onSave, o
                                 Status
                             </label>
                             <select
-                                value={editedMember.status}
-                                onChange={(e) => setEditedMember({ ...editedMember, status: e.target.value as any })}
+                                value={editedMember.isActive ? 'Active' : 'Inactive'}
+                                onChange={(e) => setEditedMember({ ...editedMember, isActive: e.target.value === 'Active' })}
                                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                             >
                                 <option value="Active">Active</option>

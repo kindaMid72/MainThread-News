@@ -1,0 +1,7 @@
+PORT=your port number
+CLIENT_URL=your client url
+
+RESEND_API_KEY=your resend api key
+SUPABASE_URL=your supabase url
+SUPABASE_ANON_KEY=your supabase anon key
+SUPABASE_SECRET_KEY=your supabase secret key
