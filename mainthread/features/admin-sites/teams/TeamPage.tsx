@@ -1,8 +1,11 @@
 "use client";
 
+import api from '@/libs/axiosInterceptor/axiosAdminInterceptor';
+
 import { TeamMember } from '@/types/TeamMember.type';
-import { Edit, Plus, Save, Search, X, Mail } from 'lucide-react';
+import { Edit, Mail, Plus, X } from 'lucide-react';
 import { useState } from 'react';
+import OverlayTeamEditPage from './teams-subpage/OverlayTeamEditPage';
 
 // Initial mock data
 const initialTeam: TeamMember[] = [
@@ -10,7 +13,7 @@ const initialTeam: TeamMember[] = [
         id: '1',
         name: 'Alice Johnson',
         email: 'alice@example.com',
-        role: 'Admin',
+        role: 'admin',
         status: 'Active',
         avatarUrl: 'https://ui-avatars.com/api/?name=Alice+Johnson&background=random'
     },
@@ -18,16 +21,16 @@ const initialTeam: TeamMember[] = [
         id: '2',
         name: 'Bob Smith',
         email: 'bob@example.com',
-        role: 'Editor',
-        status: 'Active',
+        role: 'writer',
+        status: 'Inactive',
         avatarUrl: 'https://ui-avatars.com/api/?name=Bob+Smith&background=random'
     },
     {
         id: '3',
         name: 'Charlie Brown',
         email: 'charlie@example.com',
-        role: 'Author',
-        status: 'Inactive',
+        role: 'superadmin',
+        status: 'Active',
         avatarUrl: 'https://ui-avatars.com/api/?name=Charlie+Brown&background=random'
     }
 ];
@@ -40,11 +43,24 @@ export default function TeamPage() {
     const [isAdding, setIsAdding] = useState(false);
     const [newUser, setNewUser] = useState({ email: '', role: 'Author' });
 
+    // Edit Overlay State
+    const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
+    const [isEditOverlayOpen, setIsEditOverlayOpen] = useState(false);
+
     const filteredTeam = team.filter(member =>
         member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         member.role.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    // fetch data
+    async function fetchData() {
+        const response = await api.get('');
+        const data = response.data;
+
+        // TODO: get data and config in here
+        setTeam(data);
+    }
 
     const handleSave = () => {
         if (!newUser.email) return;
@@ -53,7 +69,7 @@ export default function TeamPage() {
             id: String(team.length + 1),
             name: newUser.email.split('@')[0], // Placeholder name from email
             email: newUser.email,
-            role: newUser.role as 'Admin' | 'Editor' | 'Author',
+            role: newUser.role as 'admin' | 'superadmin' | 'writer',
             status: 'Active',
             avatarUrl: `https://ui-avatars.com/api/?name=${newUser.email}&background=random`
         };
@@ -68,8 +84,30 @@ export default function TeamPage() {
         setIsAdding(false);
     };
 
+    const handleEditClick = (member: TeamMember) => {
+        setEditingMember(member);
+        setIsEditOverlayOpen(true);
+    };
+
+    const handleUpdateMember = (updatedMember: TeamMember) => {
+        // TODO: implement api call to update a member, then trigger update for data fetching
+        setTeam(team.map(m => m.id === updatedMember.id ? updatedMember : m));
+    };
+    
+    const handleDeleteMember = (memberId: string) => {
+        // TODO: implement api call to delete member, then trigger update for data fetching
+        setTeam(team.filter(m => m.id !== memberId));
+    };
+    
     return (
         <div className="p-6">
+            <OverlayTeamEditPage
+                isOpen={isEditOverlayOpen}
+                onClose={() => setIsEditOverlayOpen(false)}
+                member={editingMember}
+                onSave={handleUpdateMember}
+                onDelete={handleDeleteMember}
+            />
             <div className="mb-8">
                 <div className="flex items-center justify-between mb-4">
                     <div>
@@ -195,8 +233,8 @@ export default function TeamPage() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                                ${member.role === 'Admin' ? 'bg-purple-100 text-purple-800' :
-                                                    member.role === 'Editor' ? 'bg-blue-100 text-blue-800' :
+                                                ${member.role === 'superadmin' ? 'bg-purple-100 text-purple-800' :
+                                                    member.role === 'admin' ? 'bg-blue-100 text-blue-800' :
                                                         'bg-gray-100 text-gray-800'}`}>
                                                 {member.role}
                                             </span>
@@ -210,6 +248,7 @@ export default function TeamPage() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <button
+                                                onClick={() => handleEditClick(member)}
                                                 className="p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors cursor-pointer"
                                                 title="Edit"
                                             >
@@ -223,6 +262,7 @@ export default function TeamPage() {
                     </div>
                 </div>
             </div>
+
         </div>
     );
 }
