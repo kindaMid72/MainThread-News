@@ -29,17 +29,26 @@ export async function getAllUser() {
     return { data: member };
 }
 
-export async function updateUser(member: TeamMember) {
+export async function updateUser({id, name, role, isActive}: TeamMember) {
+    const dbAccess = await createDatabaseAccess();
+    const { data, error }: any = await dbAccess
+    .from('users_access')
+    .update({
+        name: name,
+        role: role,
+        is_active: isActive,
+    })
+    .eq('id', id);
+    
+    if (error) return { error };
+    return { data };
+}
+export async function deleteUser({id}: TeamMember) {
     const dbAccess = await createDatabaseAccess();
     const { data, error }: any = await dbAccess
         .from('users_access')
-        .update({
-            name: member.name,
-            role: member.role,
-            avatar_url: member.avatarUrl,
-            is_active: member.isActive,
-        })
-        .eq('id', member.id);
+        .delete()
+        .eq('id', id);
 
     if (error) return { error };
     return { data };
@@ -113,4 +122,39 @@ export async function insertUser({name, avatarUrl, email, role, password}: {name
 
     if (insertUserAccessError) return {data: null, error: insertUserAccessError };
     return {data: insertUserAccess, error: null};
+}
+
+export async function getUserRoleById({userId}: {userId: string}): Promise<string> {
+    const dbAccess = await createDatabaseAccess();
+    const { data, error }: any = await dbAccess
+        .from('users_access')
+        .select('role')
+        .eq('user_id', userId)
+        .single();
+    
+    if (error || !data) return ''
+    return data.role;
+}
+export async function getUserIdById({id} : {id: string}): Promise<string> {
+    const dbAccess = await createDatabaseAccess();
+    const { data, error }: any = await dbAccess
+        .from('users_access')
+        .select('user_id')
+        .eq('id', id)
+        .single();
+    
+    if (error || !data) return '';
+    return data.user_id;
+}
+
+export async function countActiveSuperAdmin(): Promise<number> {
+    const dbAccess = await createDatabaseAccess();
+    const { count, error }: any = await dbAccess
+        .from('users_access')
+        .select('id', { count: 'exact' })
+        .eq('role', 'superadmin')
+        .eq('is_active', true)
+    
+    if (error || !count) return 0;
+    return count;
 }

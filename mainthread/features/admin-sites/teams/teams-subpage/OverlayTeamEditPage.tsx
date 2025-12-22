@@ -106,12 +106,12 @@ export default function OverlayTeamEditPage({ isOpen, onClose, member, onSave, o
                                 onChange={(e) => setEditedMember({ ...editedMember, role: e.target.value as any })}
                                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                             >
-                                <option value="Author">Author</option>
-                                <option value="Editor">Editor</option>
-                                <option value="Admin">Admin</option>
+                                <option value="writer">Writer</option>
+                                <option value="superadmin">Super Admin</option>
+                                <option value="admin">Admin</option>
                             </select>
                             <p className="text-xs text-gray-500 mt-1">
-                                Admin memiliki akses penuh. Editor bisa mengedit artikel. Author hanya bisa menulis.
+                                Super Admin dan Admin memiliki akses penuh. Writer hanya bisa menulis & publish artikel.
                             </p>
                         </div>
 

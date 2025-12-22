@@ -1,4 +1,4 @@
-import { getAllUser, updateUser, checkIfEmailExist, insertInviteToken, checkIfInviteTokenValidReturnUser, insertUser } from "./teams.repositories";
+import { getAllUser,getUserRoleById, updateUser, checkIfEmailExist, countActiveSuperAdmin, getUserIdById, insertInviteToken, checkIfInviteTokenValidReturnUser, insertUser, deleteUser } from "./teams.repositories";
 import { TeamMember, TeamMemberQuery, TeamMemberCreate, UserInvite } from "./teams.types";
 import generateRandomToken from "../../utils/generator/generateRandomToken";
 import Emailer from "../../config/emailer/emailerInstance";
@@ -6,6 +6,7 @@ import Emailer from "../../config/emailer/emailerInstance";
 // utils
 import hashSHA256 from "../../utils/authTools/hashSHA256";
 import generatePictureUrl from "../../utils/generator/generatePictureUrl";
+import extractIdFromToken from "../../utils/authTools/extracIdFromToken";
 
 // libs
 import { Temporal } from "@js-temporal/polyfill";
@@ -88,15 +89,61 @@ export async function acceptInviteService({token, password}: {token: string, pas
     return true;
 }
 
-export async function updateUserService(member: TeamMember) {
-    // panggil repository
-    const updatedUser = await updateUser(member);
+export async function updateUserService({requester, id, name, role, isActive}: any) : Promise<boolean> {
+    // get the requester role by extracting the id from requester (req.headers.authorization)
+    const requesterId = await extractIdFromToken(requester); // auth.users.id
+    const requesterRole : string = await getUserRoleById({userId: requesterId as string}); // public.users_access.role
+
+    // get the target role & id (auth.users.id)
+    const targetId = await getUserIdById({id});
+    const targetRole : string = await getUserRoleById({userId: targetId as string});
+
+    // check if the changes if valid
+    /**
+     * 1. admin can change any user but not superadmin
+     * 2. superadmin can change any user but if the target is superadmin and the new isActive is false and there only 1 superadmin, then throw error
+     */
+
+    // 1. if the reqeuster role is admin, make user its not update superadmin
+    if (requesterRole === 'admin') {
+        if (targetRole === 'superadmin') { // prevent admin to update superadmin
+            return false;
+        }
+        if(role === 'superadmin') { // prevent admin to change other user role to superadmin
+            return false;
+        }
+    }
+
+    // 2. if the requester role is superadmin
+    if (requesterRole === 'superadmin') {
+        const superAdminCount: number = await countActiveSuperAdmin();
+        console.log(superAdminCount);
+        if (superAdminCount === 1 && targetId === requesterId && (isActive === false || role !== 'superadmin')) { // prevent the last superadmin to update it self that disable the last superadmin access
+            return false;
+        }
+    }
+
+    // do the update is all condition is valid, and user permitted to update the target user
+    const updatedUser = await updateUser({ id, role, name, isActive});
 
     // jika error, lemparkan error untuk di-catch oleh controller
     if (updatedUser.error) {
         throw new Error(updatedUser.error.message);
     }
+    return true;
+}
+
+export async function deleteUserService({id} : TeamMember){
+    // panggil repository
+
+    // if the changes is 
+    const deletedUser: any = await deleteUser({id});
+
+    // jika error, lemparkan error untuk di-catch oleh controller
+    if (deletedUser.error) {
+        throw new Error(deletedUser.error.message);
+    }
 
     // return data bersih
-    return updatedUser.data;
+    return deletedUser.data;    
 }

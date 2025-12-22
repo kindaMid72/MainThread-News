@@ -3,8 +3,16 @@
 import { AlertCircle, Check, Eye, EyeOff, Loader2, Lock } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useSearchParams} from "next/navigation";
+
+// libs
+import api from "@/libs/axiosInterceptor/axiosAdminInterceptor"
 
 export default function ConfirmEmailPage() {
+    const searchParams = useSearchParams();
+
+
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
@@ -44,11 +52,33 @@ export default function ConfirmEmailPage() {
 
         setIsLoading(true);
 
-        // Simulate API Call TODO: setup api for account creation after confirmation
-        setTimeout(() => {
-            setIsLoading(false);
+        try{
+            console.log('attempt submit');
+            const token = searchParams.get("token");
+            const newPassword = password;
+    
+            // console.log('token: ', token);
+            // console.log('newPassword: ', newPassword);
+
+            if (!token || newPassword !== confirmPassword || newPassword === "") {
+                throw new Error("Token, password, atau confirm password tidak ditemukan.");
+            }
+
+            const response = await api.post("/api/admin/teams/accept-invite-new-user", {
+                token: token,
+                password: newPassword
+            });
+
+            if (response.status !== 200) {
+                throw new Error("Gagal menetapkan password. Silakan coba lagi.");
+            }
             setSuccess(true);
-        }, 1500);
+        }catch(err){
+            setError("Gagal menetapkan password. Silakan coba lagi.");
+            setIsLoading(false);
+        }finally{
+            setIsLoading(false);
+        }
     };
 
     if (success) {

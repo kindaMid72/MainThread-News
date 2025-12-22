@@ -1,3 +1,4 @@
-NEXT_PUBLIC_SUPABASE_URL=yourSupabaseKey
-NEXT_PUBLIC_SUPABASE_ANON_KEY=yourSupabaseAnonKey
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 
+NEXT_PUBLIC_SERVER_API_URL=your_server_api_url

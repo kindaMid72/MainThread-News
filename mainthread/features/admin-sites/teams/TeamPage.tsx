@@ -7,38 +7,13 @@ import { Edit, Mail, Plus, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import OverlayTeamEditPage from './teams-subpage/OverlayTeamEditPage';
 
+// components
+import PopUpMessage from '@/components/PopUpMessage';
+
 const avatarUrl = (name: string) => `https://ui-avatars.com/api/?name=${name}&background=random`;
 
-// Initial mock data
-const initialTeam: TeamMember[] = [
-    {
-        id: '1',
-        name: 'Alice Johnson',
-        email: 'alice@example.com',
-        role: 'admin',
-        isActive: true,
-        avatarUrl: 'https://ui-avatars.com/api/?name=Alice+Johnson&background=random'
-    },
-    {
-        id: '2',
-        name: 'Bob Smith',
-        email: 'bob@example.com',
-        role: 'writer',
-        isActive: false,
-        avatarUrl: 'https://ui-avatars.com/api/?name=Bob+Smith&background=random'
-    },
-    {
-        id: '3',
-        name: 'Charlie Brown',
-        email: 'charlie@example.com',
-        role: 'superadmin',
-        isActive: true,
-        avatarUrl: 'https://ui-avatars.com/api/?name=Charlie+Brown&background=random'
-    }
-];
-
 export default function TeamPage() {
-    const [team, setTeam] = useState<TeamMember[]>(initialTeam);
+    const [team, setTeam] = useState<TeamMember[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
 
     // async state
@@ -48,6 +23,19 @@ export default function TeamPage() {
     // Form State
     const [isAdding, setIsAdding] = useState(false);
     const [newUser, setNewUser] = useState({ email: '', role: 'Author' });
+    const [popUpMessage, setPopUpMessage] = useState<{
+        title: string;
+        message: string;
+        type: 'success' | 'error' | 'warning' | 'info';
+        show: boolean;
+        duration?: number;
+        onClose?: () => void;
+    }>({
+        title: '',
+        message: '',
+        type: 'success',
+        show: false
+    });
 
     // Edit Overlay State
     const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
@@ -57,10 +45,11 @@ export default function TeamPage() {
     async function fetchData() {
         setIsLoading(true);
         try {
-            const response = await api.get(`${process.env.NEXT_PUBLIC_SERVER_API_URL}/api/admin/teams/get-all-users`);
+            const response = await api.get(`/api/admin/teams/get-all-users`);
             const data: TeamMember[] = response.data;
-
-            console.log(data);
+            if(data){
+                setIsError(false);
+            }
             setTeam(data);
         } catch (err) {
             console.log(err);
@@ -70,21 +59,42 @@ export default function TeamPage() {
         }
     }
 
-    const handleSave = () => {
+    const handleSave = async () => {
         if (!newUser.email) return;
 
-        const newMember: TeamMember = {
-            id: String(team.length + 1),
-            name: newUser.email.split('@')[0], // Placeholder name from email
-            email: newUser.email,
-            role: newUser.role as 'admin' | 'superadmin' | 'writer',
-            isActive: true,
-            avatarUrl: `https://ui-avatars.com/api/?name=${newUser.email}&background=random`
-        };
 
-        setTeam([...team, newMember]);
-        setNewUser({ email: '', role: 'Author' });
-        setIsAdding(false);
+        try {
+            const response = await api.post(`${process.env.NEXT_PUBLIC_SERVER_API_URL}/api/admin/teams/invite-new-user`, {
+                email: newUser.email,
+                role: newUser.role
+            });
+            if(response.status === 200){
+                setPopUpMessage({
+                    title: 'success',
+                    message: response.data.message || 'User invited successfully',
+                    type: 'success',
+                    show: true
+                });
+                
+            }else{
+                setPopUpMessage({
+                    title: 'error',
+                    message: response.data.message || 'User invited failed',
+                    type: 'error',
+                    show: true
+                });
+            }
+
+        } catch (err) {
+            setPopUpMessage({
+                title: 'error',
+                message: 'User invitation failed',
+                type: 'error',
+                show: true
+            });
+        } finally {
+            setIsAdding(false);
+        }
     };
 
     const handleCancel = () => {
@@ -97,9 +107,42 @@ export default function TeamPage() {
         setIsEditOverlayOpen(true);
     };
 
-    const handleUpdateMember = (updatedMember: TeamMember) => {
-        // TODO: implement api call to update a member, then trigger update for data fetching
-        setTeam(team.map(m => m.id === updatedMember.id ? updatedMember : m));
+    const handleUpdateMember = async (updatedMember: TeamMember) => {
+        // check input
+        try{
+            setIsLoading(true);
+            const response = await api.put(`/api/admin/teams/update-user`, {
+                id: updatedMember.id,
+                name: updatedMember.name,
+                role: updatedMember.role,
+                isActive: updatedMember.isActive
+            });
+            if(response.status === 200){
+                setPopUpMessage({
+                    title: 'success',
+                    message: response.data.message || 'User updated successfully',
+                    type: 'success',
+                    show: true
+                });
+            }else{
+                setPopUpMessage({
+                    title: 'error',
+                    message: response.data.message || 'User updated failed',
+                    type: 'error',
+                    show: true
+                });
+            }
+        }catch(err){
+            setPopUpMessage({
+                title: 'error',
+                message: 'User update failed',
+                type: 'error',
+                show: true
+            });
+        }finally{
+            setIsLoading(false);
+        }
+        fetchData();
     };
 
     const handleDeleteMember = (memberId: string) => {
@@ -183,6 +226,16 @@ export default function TeamPage() {
 
     return (
         <div className="p-6">
+            {popUpMessage.show && 
+                <PopUpMessage
+                    title={popUpMessage.title}
+                    message={popUpMessage.message}
+                    type={popUpMessage.type}
+                    duration={popUpMessage.duration}
+                    onClose={() => setPopUpMessage({ ...popUpMessage, show: false })}
+                />
+            }
+
             <OverlayTeamEditPage
                 isOpen={isEditOverlayOpen}
                 onClose={() => setIsEditOverlayOpen(false)}
@@ -230,9 +283,8 @@ export default function TeamPage() {
                                     onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
                                     className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600"
                                 >
-                                    <option value="Author">Author</option>
-                                    <option value="Editor">Editor</option>
-                                    <option value="Admin">Admin</option>
+                                    <option value="writer">writer</option>
+                                    <option value="admin">admin</option>
                                 </select>
                             </div>
                         </div>
