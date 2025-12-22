@@ -1,0 +1,9 @@
+PORT=your_port_number
+CLIENT_URL=your_client_url
+
+RESEND_API_KEY=your_resend_api_key
+SUPABASE_URL=your_supabase_url
+SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SECRET_KEY=your_supabase_secret_key
+
+DOMAIN_NAME=your_domain_name

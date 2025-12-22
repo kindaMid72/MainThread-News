@@ -2,7 +2,9 @@ export interface TeamMember {
     id: string;
     name: string;
     email: string;
-    role: 'Admin' | 'Editor' | 'Author';
-    status: 'Active' | 'Inactive';
+    role: 'admin' | 'superadmin' | 'writer';
     avatarUrl?: string;
+    isActive: boolean;
+    createdAt?: string;
+    updatedAt?: string;
 }

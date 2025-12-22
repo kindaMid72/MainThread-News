@@ -1,66 +1,100 @@
 "use client";
 
-import { TeamMember } from '@/types/TeamMember.type';
-import { Edit, Plus, Save, Search, X, Mail } from 'lucide-react';
-import { useState } from 'react';
+import api from '@/libs/axiosInterceptor/axiosAdminInterceptor';
 
-// Initial mock data
-const initialTeam: TeamMember[] = [
-    {
-        id: '1',
-        name: 'Alice Johnson',
-        email: 'alice@example.com',
-        role: 'Admin',
-        status: 'Active',
-        avatarUrl: 'https://ui-avatars.com/api/?name=Alice+Johnson&background=random'
-    },
-    {
-        id: '2',
-        name: 'Bob Smith',
-        email: 'bob@example.com',
-        role: 'Editor',
-        status: 'Active',
-        avatarUrl: 'https://ui-avatars.com/api/?name=Bob+Smith&background=random'
-    },
-    {
-        id: '3',
-        name: 'Charlie Brown',
-        email: 'charlie@example.com',
-        role: 'Author',
-        status: 'Inactive',
-        avatarUrl: 'https://ui-avatars.com/api/?name=Charlie+Brown&background=random'
-    }
-];
+import { TeamMember } from '@/types/TeamMember.type';
+import { Edit, Mail, Plus, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import OverlayTeamEditPage from './teams-subpage/OverlayTeamEditPage';
+
+// components
+import PopUpMessage from '@/components/PopUpMessage';
+
+const avatarUrl = (name: string) => `https://ui-avatars.com/api/?name=${name}&background=random`;
 
 export default function TeamPage() {
-    const [team, setTeam] = useState<TeamMember[]>(initialTeam);
+    const [team, setTeam] = useState<TeamMember[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
+
+    // async state
+    const [isLoading, setIsLoading] = useState(false);
+    const [isError, setIsError] = useState(false);
 
     // Form State
     const [isAdding, setIsAdding] = useState(false);
     const [newUser, setNewUser] = useState({ email: '', role: 'Author' });
+    const [popUpMessage, setPopUpMessage] = useState<{
+        title: string;
+        message: string;
+        type: 'success' | 'error' | 'warning' | 'info';
+        show: boolean;
+        duration?: number;
+        onClose?: () => void;
+    }>({
+        title: '',
+        message: '',
+        type: 'success',
+        show: false
+    });
 
-    const filteredTeam = team.filter(member =>
-        member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        member.role.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // Edit Overlay State
+    const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
+    const [isEditOverlayOpen, setIsEditOverlayOpen] = useState(false);
 
-    const handleSave = () => {
+    // fetch data
+    async function fetchData() {
+        setIsLoading(true);
+        try {
+            const response = await api.get(`/api/admin/teams/get-all-users`);
+            const data: TeamMember[] = response.data;
+            if(data){
+                setIsError(false);
+            }
+            setTeam(data);
+        } catch (err) {
+            console.log(err);
+            setIsError(true);
+        } finally {
+            setIsLoading(false);
+        }
+    }
+
+    const handleSave = async () => {
         if (!newUser.email) return;
 
-        const newMember: TeamMember = {
-            id: String(team.length + 1),
-            name: newUser.email.split('@')[0], // Placeholder name from email
-            email: newUser.email,
-            role: newUser.role as 'Admin' | 'Editor' | 'Author',
-            status: 'Active',
-            avatarUrl: `https://ui-avatars.com/api/?name=${newUser.email}&background=random`
-        };
 
-        setTeam([...team, newMember]);
-        setNewUser({ email: '', role: 'Author' });
-        setIsAdding(false);
+        try {
+            const response = await api.post(`${process.env.NEXT_PUBLIC_SERVER_API_URL}/api/admin/teams/invite-new-user`, {
+                email: newUser.email,
+                role: newUser.role
+            });
+            if(response.status === 200){
+                setPopUpMessage({
+                    title: 'success',
+                    message: response.data.message || 'User invited successfully',
+                    type: 'success',
+                    show: true
+                });
+                
+            }else{
+                setPopUpMessage({
+                    title: 'error',
+                    message: response.data.message || 'User invited failed',
+                    type: 'error',
+                    show: true
+                });
+            }
+
+        } catch (err) {
+            setPopUpMessage({
+                title: 'error',
+                message: 'User invitation failed',
+                type: 'error',
+                show: true
+            });
+        } finally {
+            setIsAdding(false);
+        }
     };
 
     const handleCancel = () => {
@@ -68,8 +102,174 @@ export default function TeamPage() {
         setIsAdding(false);
     };
 
+    const handleEditClick = (member: TeamMember) => {
+        setEditingMember(member);
+        setIsEditOverlayOpen(true);
+    };
+
+    const handleUpdateMember = async (updatedMember: TeamMember) => {
+        // check input
+        try{
+            setIsLoading(true);
+            const response = await api.put(`/api/admin/teams/update-user`, {
+                id: updatedMember.id,
+                name: updatedMember.name,
+                role: updatedMember.role,
+                isActive: updatedMember.isActive
+            });
+            if(response.status === 200){
+                setPopUpMessage({
+                    title: 'success',
+                    message: response.data.message || 'User updated successfully',
+                    type: 'success',
+                    show: true
+                });
+            }else{
+                setPopUpMessage({
+                    title: 'error',
+                    message: response.data.message || 'User updated failed',
+                    type: 'error',
+                    show: true
+                });
+            }
+        }catch(err){
+            setPopUpMessage({
+                title: 'error',
+                message: 'User update failed',
+                type: 'error',
+                show: true
+            });
+        }finally{
+            setIsLoading(false);
+        }
+        fetchData();
+    };
+
+    const handleDeleteMember = async (memberId: string) => {
+        try{
+            setIsLoading(true);
+            const response = await api.delete(`/api/admin/teams/delete-user/${memberId}`);
+            if(response.status === 200){
+                setPopUpMessage({
+                    title: 'success',
+                    message: response.data.message || 'User deleted successfully',
+                    type: 'success',
+                    show: true
+                });
+            }else{
+                setPopUpMessage({
+                    title: 'error',
+                    message: response.data.message || 'User deleted failed',
+                    type: 'error',
+                    show: true
+                });
+            }
+        }catch(err){
+            setPopUpMessage({
+                title: 'error',
+                message: 'User delete failed',
+                type: 'error',
+                show: true
+            });
+        }finally{
+            setIsLoading(false);
+        }
+        fetchData();
+    };
+
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    // Skeleton Loading
+    if (isLoading) {
+        return (
+            <div className="p-6">
+                <div className="mb-8">
+                    <div className="flex items-center justify-between mb-4">
+                        <div>
+                            <div className="h-8 w-48 bg-gray-200 rounded animate-pulse mb-2"></div>
+                            <div className="h-4 w-64 bg-gray-200 rounded animate-pulse"></div>
+                        </div>
+                        <div className="h-10 w-40 bg-gray-200 rounded animate-pulse"></div>
+                    </div>
+
+                    <div className="bg-white rounded-lg shadow-sm overflow-hidden border">
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead className="bg-gray-50 border-b">
+                                    <tr>
+                                        {[1, 2, 3, 4, 5].map((i) => (
+                                            <th key={i} className="px-6 py-3">
+                                                <div className="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
+                                            </th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200">
+                                    {[1, 2, 3, 4, 5].map((row) => (
+                                        <tr key={row}>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse"></div>
+                                                    <div className="h-4 w-32 bg-gray-200 rounded animate-pulse"></div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4"><div className="h-4 w-40 bg-gray-200 rounded animate-pulse"></div></td>
+                                            <td className="px-6 py-4"><div className="h-6 w-20 bg-gray-200 rounded-full animate-pulse"></div></td>
+                                            <td className="px-6 py-4"><div className="h-6 w-20 bg-gray-200 rounded-full animate-pulse"></div></td>
+                                            <td className="px-6 py-4"><div className="h-8 w-8 bg-gray-200 rounded animate-pulse"></div></td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Error State
+    if (isError) {
+        return (
+            <div className="p-6 flex flex-col items-center justify-center min-h-[400px] text-center">
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                    <div className="w-8 h-8 text-red-600">⚠️</div>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Gagal Memuat Data</h3>
+                <p className="text-gray-500 max-w-md mb-6">
+                    Terjadi kesalahan saat menghubungi server. Mohon periksa koneksi internet Anda atau coba beberapa saat lagi.
+                </p>
+                <button
+                    onClick={() => fetchData()}
+                    className="px-6 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
+                >
+                    Coba Lagi
+                </button>
+            </div>
+        );
+    }
+
     return (
         <div className="p-6">
+            {popUpMessage.show && 
+                <PopUpMessage
+                    title={popUpMessage.title}
+                    message={popUpMessage.message}
+                    type={popUpMessage.type}
+                    duration={popUpMessage.duration}
+                    onClose={() => setPopUpMessage({ ...popUpMessage, show: false })}
+                />
+            }
+
+            <OverlayTeamEditPage
+                isOpen={isEditOverlayOpen}
+                onClose={() => setIsEditOverlayOpen(false)}
+                member={editingMember}
+                onSave={handleUpdateMember}
+                onDelete={handleDeleteMember}
+            />
             <div className="mb-8">
                 <div className="flex items-center justify-between mb-4">
                     <div>
@@ -110,9 +310,8 @@ export default function TeamPage() {
                                     onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
                                     className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600"
                                 >
-                                    <option value="Author">Author</option>
-                                    <option value="Editor">Editor</option>
-                                    <option value="Admin">Admin</option>
+                                    <option value="writer">writer</option>
+                                    <option value="admin">admin</option>
                                 </select>
                             </div>
                         </div>
@@ -174,7 +373,7 @@ export default function TeamPage() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200">
-                                {filteredTeam.map((member) => (
+                                {team.map((member) => (
                                     <tr key={member.id} className="hover:bg-gray-50">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
@@ -195,21 +394,22 @@ export default function TeamPage() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                                ${member.role === 'Admin' ? 'bg-purple-100 text-purple-800' :
-                                                    member.role === 'Editor' ? 'bg-blue-100 text-blue-800' :
+                                                ${member.role === 'superadmin' ? 'bg-purple-100 text-purple-800' :
+                                                    member.role === 'admin' ? 'bg-blue-100 text-blue-800' :
                                                         'bg-gray-100 text-gray-800'}`}>
                                                 {member.role}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                                ${member.status === 'Active' ? 'bg-green-100 text-green-800' :
+                                                ${member.isActive ? 'bg-green-100 text-green-800' :
                                                     'bg-red-100 text-red-800'}`}>
-                                                {member.status}
+                                                {member.isActive ? 'Active' : 'Inactive'}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
                                             <button
+                                                onClick={() => handleEditClick(member)}
                                                 className="p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors cursor-pointer"
                                                 title="Edit"
                                             >
@@ -223,6 +423,7 @@ export default function TeamPage() {
                     </div>
                 </div>
             </div>
+
         </div>
     );
 }

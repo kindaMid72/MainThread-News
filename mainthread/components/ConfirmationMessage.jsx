@@ -1,82 +1,105 @@
-'use client'
+"use client";
+
+import { AlertTriangle, Check, Info } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const colorMap = {
     red: {
         bg: 'bg-red-600',
         hover: 'hover:bg-red-700',
-        disabled: 'disabled:bg-red-300',
-        darkDisabled: 'dark:disabled:bg-red-800',
-        text: 'text-white'
+        disabled: 'disabled:opacity-50 disabled:cursor-not-allowed',
+        text: 'text-white',
+        icon: <AlertTriangle className="w-12 h-12 text-red-500 mb-4" />
     },
     green: {
         bg: 'bg-green-600',
         hover: 'hover:bg-green-700',
-        disabled: 'disabled:bg-green-300',
-        darkDisabled: 'dark:disabled:bg-green-800',
-        text: 'text-white'
+        disabled: 'disabled:opacity-50 disabled:cursor-not-allowed',
+        text: 'text-white',
+        icon: <Check className="w-12 h-12 text-green-500 mb-4" />
     },
     gray: {
         bg: 'bg-gray-200',
         hover: 'hover:bg-gray-300',
-        darkBg: 'dark:bg-gray-600',
-        darkHover: 'dark:hover:bg-gray-500',
         text: 'text-gray-800',
-        darkText: 'dark:text-gray-100'
+        disabled: 'disabled:opacity-50 disabled:cursor-not-allowed',
+        icon: <Info className="w-12 h-12 text-gray-500 mb-4" />
+    },
+    blue: {
+        bg: 'bg-blue-600',
+        hover: 'hover:bg-blue-700',
+        disabled: 'disabled:opacity-50 disabled:cursor-not-allowed',
+        text: 'text-white',
+        icon: <Info className="w-12 h-12 text-blue-500 mb-4" />
     }
-    // Anda bisa menambahkan warna lain di sini, misalnya 'green', 'blue', dll.
 };
 
-export default ({ title, message, onConfirm, onCancel, delayConfirm = false, delayCancel = false, confirmColor = 'red', cancelColor = 'gray', delaySecond = 5, backgroundClass = '' }) => {
+export default function ConfirmationMessage({
+    title,
+    message,
+    onConfirm,
+    onCancel,
+    delayConfirm = false,
+    delayCancel = false,
+    confirmColor = 'red',
+    cancelColor = 'gray',
+    delaySecond = 5,
+    backgroundClass = ''
+}) {
     const [timeLeft, setTimeLeft] = useState(delaySecond);
 
     useEffect(() => {
-        // Jalankan hitung mundur hanya jika delayConfirm aktif dan waktu masih tersisa
         if (!delayConfirm || timeLeft <= 0) return;
 
-        // Atur interval untuk mengurangi waktu setiap 1 detik
         const intervalId = setInterval(() => {
             setTimeLeft(prevTime => prevTime - 1);
         }, 1000);
 
-        // Fungsi cleanup untuk membersihkan interval saat komponen di-unmount
         return () => clearInterval(intervalId);
+    }, [delayConfirm, timeLeft]);
 
-    }, []);
+    const activeStyle = colorMap[confirmColor] || colorMap.red;
 
     return (
-        <>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             {/* Backdrop */}
-            <div onClick={() => { onCancel }} className={backgroundClass.length > 0 ? backgroundClass : "fixed w-full h-full inset-0 z-49 flex items-center justify-center bg-gray-900/50 backdrop-blur-xs"}></div>
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-transparent backdrop-blur-xs">
-                {/* Modal Card */}
-                <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-xl dark:bg-gray-900">
-                    <div className="text-center">
-                        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{title}</h2>
-                        <p className="mt-2 text-gray-600 dark:text-gray-300">{message}</p>
-                    </div>
+            <div
+                onClick={onCancel}
+                className={`fixed inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity ${backgroundClass}`}
+            />
 
-                    {/* Tombol Aksi */}
-                    <div className="mt-6 flex justify-center gap-4">
+            {/* Modal Card */}
+            <div className="relative w-full max-w-sm bg-white rounded-xl shadow-2xl p-6 transform transition-all animate-in fade-in zoom-in-95 duration-200">
+                <div className="flex flex-col items-center text-center">
+                    {activeStyle.icon}
+
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">
+                        {title}
+                    </h3>
+
+                    <p className="text-gray-500 mb-6">
+                        {message}
+                    </p>
+
+                    <div className="flex items-center gap-3 w-full">
                         <button
                             onClick={onCancel}
                             disabled={delayCancel && timeLeft > 0}
-                            className={`cursor-pointer rounded-md px-4 py-2 font-semibold transition-colors ${colorMap[cancelColor]?.bg} ${colorMap[cancelColor]?.hover} ${colorMap[cancelColor]?.darkBg} ${colorMap[cancelColor]?.darkHover} ${colorMap[cancelColor]?.text} ${colorMap[cancelColor]?.darkText}`}
+                            className={`flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors cursor-pointer ${colorMap.gray.disabled}`}
                         >
-                            Cancel
+                            Batalkan
                         </button>
 
                         <button
                             onClick={onConfirm}
                             disabled={delayConfirm && timeLeft > 0}
-                            className={`cursor-pointer rounded-md px-4 py-2 font-semibold transition-colors disabled:cursor-not-allowed ${colorMap[confirmColor]?.bg} ${colorMap[confirmColor]?.hover} ${colorMap[confirmColor]?.disabled} ${colorMap[confirmColor]?.darkDisabled} ${colorMap[confirmColor]?.text}`}
+                            className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 cursor-pointer ${activeStyle.bg} ${activeStyle.hover} ${activeStyle.text} ${activeStyle.disabled}`}
                         >
-                            {delayConfirm && timeLeft > 0 ? `Confirm (${timeLeft}s)` : 'Confirm'}
+                            {delayConfirm && timeLeft > 0 ? `Tunggu (${timeLeft}s)` : 'Konfirmasi'}
                         </button>
                     </div>
                 </div>
-
             </div>
-        </>
-    )
+        </div>
+    );
 }
