@@ -3,9 +3,10 @@ import dotenv from "dotenv";
 import express from "express";
 
 // import route
-import route from "./routes/route";
 
 dotenv.config();
+
+import route from "./routes/route";
 
 const app = express();
 app.use(cors({
