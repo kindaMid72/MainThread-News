@@ -145,9 +145,36 @@ export default function TeamPage() {
         fetchData();
     };
 
-    const handleDeleteMember = (memberId: string) => {
-        // TODO: implement api call to delete member, then trigger update for data fetching
-        setTeam(team.filter(m => m.id !== memberId));
+    const handleDeleteMember = async (memberId: string) => {
+        try{
+            setIsLoading(true);
+            const response = await api.delete(`/api/admin/teams/delete-user/${memberId}`);
+            if(response.status === 200){
+                setPopUpMessage({
+                    title: 'success',
+                    message: response.data.message || 'User deleted successfully',
+                    type: 'success',
+                    show: true
+                });
+            }else{
+                setPopUpMessage({
+                    title: 'error',
+                    message: response.data.message || 'User deleted failed',
+                    type: 'error',
+                    show: true
+                });
+            }
+        }catch(err){
+            setPopUpMessage({
+                title: 'error',
+                message: 'User delete failed',
+                type: 'error',
+                show: true
+            });
+        }finally{
+            setIsLoading(false);
+        }
+        fetchData();
     };
 
     useEffect(() => {

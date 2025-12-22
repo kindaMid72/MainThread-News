@@ -133,17 +133,45 @@ export async function updateUserService({requester, id, name, role, isActive}: a
     return true;
 }
 
-export async function deleteUserService({id} : TeamMember){
-    // panggil repository
+export async function deleteUserService({requester, id} : any) : Promise<boolean>{
 
-    // if the changes is 
-    const deletedUser: any = await deleteUser({id});
+    const requesterId = await extractIdFromToken(requester); // auth.users.id
+    const requesterRole : string = await getUserRoleById({userId: requesterId as string}); // public.users_access.role
+
+    // get the target role & id (auth.users.id)
+    const targetId = await getUserIdById({id});
+    const targetRole : string = await getUserRoleById({userId: targetId as string});
+
+    // check if the changes if valid
+    /**
+     * 1. admin can change any user but not superadmin
+     * 2. superadmin can change any user but if the target is superadmin and the new isActive is false and there only 1 superadmin, then throw error
+     */
+
+    // 1. if the reqeuster role is admin, make user its not update superadmin
+    if (requesterRole === 'admin') {
+        if (targetRole === 'superadmin') { // prevent admin to update superadmin
+            return false;
+        }
+    }
+
+    // 2. if the requester role is superadmin
+    if (requesterRole === 'superadmin') {
+        const superAdminCount: number = await countActiveSuperAdmin();
+        console.log(superAdminCount);
+        if (superAdminCount === 1 && targetId === requesterId) { // prevent the last superadmin to update it self that disable the last superadmin access
+            return false;
+        }
+    }
+    
+    // if the changes is
+    const deletedUser: boolean = await deleteUser({id});
 
     // jika error, lemparkan error untuk di-catch oleh controller
-    if (deletedUser.error) {
-        throw new Error(deletedUser.error.message);
+    if (!deletedUser) {
+        return false;
     }
 
     // return data bersih
-    return deletedUser.data;    
+    return true;    
 }

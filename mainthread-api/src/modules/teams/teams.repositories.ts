@@ -43,15 +43,26 @@ export async function updateUser({id, name, role, isActive}: TeamMember) {
     if (error) return { error };
     return { data };
 }
-export async function deleteUser({id}: TeamMember) {
+export async function deleteUser({id}: TeamMember) : Promise<boolean> {
     const dbAccess = await createDatabaseAccess();
-    const { data, error }: any = await dbAccess
+    // get auth.users.id
+    const {data: deletedUserId, error: deletedUserIdError }: any = await dbAccess
+        .from('users_access')
+        .select('user_id')
+        .eq('id', id)
+        .single();
+    if(deletedUserIdError) throw Error(deletedUserIdError);
+    // delete from users_access
+    const {data: deletedUser, error: deletedUserError }: any = await dbAccess
         .from('users_access')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+    // delete from auth.users
+    if(deletedUserError) throw Error(deletedUserError);
+    const { error: authError }: any = await dbAccess.auth.admin.deleteUser(deletedUserId.user_id);
+    if (authError) throw Error(authError);
 
-    if (error) return { error };
-    return { data };
+    return true;
 }
 
 export async function insertInviteToken({token_hash, expiredAt, email, role} : {token_hash: string, expiredAt: string, email: UserInvite['email'], role: UserInvite['role']}) { // expiredAt = date string
@@ -92,7 +103,14 @@ export async function checkIfInviteTokenValidReturnUser(tokenHash: string): Prom
         .eq('status', 'pending' as UserInvite['status'])
         .gte('expires_at', new Date().toISOString())
         .single();
-
+    // if token valid, mark token as expired
+    const { data: updateData, error: updateError }: any = await dbAccess
+        .from('user_invites')
+        .update({
+            status: 'expired' as UserInvite['status'],
+        })
+        .eq('token_hash', tokenHash);
+    if (updateError) return {data: null, error: updateError};
     if (error || !data) return {data: null, error};
     return {data, error: null};
 }

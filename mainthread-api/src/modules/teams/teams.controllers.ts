@@ -96,16 +96,17 @@ router.put('/update-user', async (req, res) => {
     }
 });
 
-router.delete('/delete-user', async (req, res) => {
+router.delete('/delete-user/:id', async (req, res) => {
     try{
         // req: id
-        const { id }: TeamMember = req.body;
+        const { id }: TeamMember = req.params;
         // check id
         if (!id || id.trim() === '') {
             return res.status(400).json({ message: 'Id is required' });
         }
         // call services, return true if success false if failed
-        const deleteUser : boolean = await deleteUserService({ id });
+        const requester = req.headers.authorization;
+        const deleteUser : boolean = await deleteUserService({ requester, id });
 
         if (!deleteUser) {
             return res.status(400).json({ message: 'Failed to delete user' });
