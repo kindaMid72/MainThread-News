@@ -1,8 +1,11 @@
+
+
 "use client";
 
 import { Tag } from '@/types/Tag.type';
-import { Edit, Plus, Save, Search, Trash2, X } from 'lucide-react';
+import { Edit, Plus, Save, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
+import OverlayTagsEditPage from './tags-subpage/OverlayTagsEditPage';
 
 // Initial mock data TODO: fetch data from server
 const initialTags: Tag[] = [
@@ -45,9 +48,40 @@ export default function TagsPage() {
         setNewTagName('');
         setIsAdding(false);
     };
+    
+    // Edit Overlay State
+    const [editOverlayOpen, setEditOverlayOpen] = useState(false);
+    const [selectedTag, setSelectedTag] = useState<Tag | null>(null);
+    
+    const handleEdit = (tag: Tag) => {
+        setSelectedTag(tag);
+        setEditOverlayOpen(true);
+    };
 
+    const handleUpdateTag = (updatedTag: Tag) => {
+        setTags(tags.map(t => t.id === updatedTag.id ? updatedTag : t));
+        setEditOverlayOpen(false);
+        setSelectedTag(null);
+    };
+    
+    const handleDeleteTag = (tagId: string) => {
+        setTags(tags.filter(t => t.id !== tagId));
+        setEditOverlayOpen(false);
+        setSelectedTag(null);
+    };
+    
     return (
         <div className="p-6">
+            {/* Edit Overlay */}
+            {editOverlayOpen && (
+                <OverlayTagsEditPage
+                    isOpen={editOverlayOpen}
+                    onClose={() => setEditOverlayOpen(false)}
+                    tag={selectedTag}
+                    onSave={handleUpdateTag}
+                    onDelete={handleDeleteTag}
+                />
+            )}
             <div className="mb-8">
                 <div className="flex items-center justify-between mb-4">
                     <div>
@@ -139,6 +173,7 @@ export default function TagsPage() {
                                         </div>
                                         <div className="col-span-3 flex justify-end gap-2">
                                             <button
+                                                onClick={() => handleEdit(tag)}
                                                 className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors cursor-pointer"
                                                 title="Edit"
                                             >

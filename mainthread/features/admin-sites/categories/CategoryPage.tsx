@@ -1,69 +1,227 @@
+
+
 "use client";
 
-import { Category } from '@/types/Category.type';
-import { Edit, Plus, Save, Search, Trash2, X } from 'lucide-react';
-import { useState } from 'react';
+import { Categories, CategoriesQuery } from '@/types/Category.type';
+import { Edit, Plus, Save, Trash2, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import OverlayCategoryEditPage from './categories-subpage/OverlayCategoryEditPage';
 
-// Initial mock data
-const initialCategories: Category[] = [
-    {
-        id: '1',
-        name: 'Teknologi',
-        slug: 'teknologi',
-        description: 'Berita terkini seputar teknologi dan inovasi'
-    },
-    {
-        id: '2',
-        name: 'Gaya Hidup',
-        slug: 'gaya-hidup',
-        description: 'Tips dan tren gaya hidup masa kini'
-    },
-    {
-        id: '3',
-        name: 'Olahraga',
-        slug: 'olahraga',
-        description: 'Update skor dan berita olahraga terbaru'
-    }
-];
+// api caller
+import api from '@/libs/axiosInterceptor/axiosAdminInterceptor';
+
+// components
+import PopUpMessage from '@/components/PopUpMessage';
+import ErrorWithRefreshButton from '@/components/ErrorWithRefreshButton';
+import LoadingSkeletonTable from '@/components/LoadingSkeletonTabel';
 
 export default function CategoryPage() {
-    const [categories, setCategories] = useState<Category[]>(initialCategories);
+    const [categories, setCategories] = useState<CategoriesQuery[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
 
     // Form State
     const [isAdding, setIsAdding] = useState(false);
-    const [newCategory, setNewCategory] = useState({ name: '', description: '' });
+    const [newCategory, setNewCategory] = useState({ name: '', description: '', isActive: true });
 
-    const filteredCategories = categories.filter(category =>
-        category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        category.slug.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        category.description.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // PopUpMessage State
+    const [popUpMessage, setPopUpMessage] = useState({
+        show: false,
+        message: '',
+        type: 'success'
+    });
 
-    const handleSave = () => {
+    
+    // async state
+    const [isLoading, setIsLoading] = useState(false);
+    const [isError, setIsError] = useState(false);
+
+    const fetchCategories = async () => {
+        try {
+            setIsLoading(true);
+            setIsError(false);
+            const data: CategoriesQuery[] = await api.get('/api/admin/categories/get-all-categories')
+                .then(res => res?.data)
+                .catch(error => {
+                    throw new Error(`Error fetching categories: ${error}`);
+                });
+
+            if (!data) throw new Error('Error fetching categories');
+
+            setCategories(data);
+        } catch (error) {
+            console.error('Error fetching categories:', error);
+            throw new Error(`Error fetching categories: ${error}`);
+        }
+        finally{
+            setIsLoading(false);
+        }
+    };
+
+    const handleSave = async () => {
         if (!newCategory.name) return; // Basic validation
+        
 
-        const slug = newCategory.name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
-
-        const newEntry: Category = {
-            id: String(categories.length + 1),
+        const newEntry: Categories = {
             name: newCategory.name,
             description: newCategory.description,
-            slug: slug
+            isActive: newCategory.isActive
         };
 
-        setCategories([...categories, newEntry]);
-        setNewCategory({ name: '', description: '' });
-        setIsAdding(false);
+        try{
+            setIsLoading(true);
+            const response: any = await api.post('/api/admin/categories/add-category', newEntry);
+            if(response.status === 200){
+                setPopUpMessage({
+                    show: true,
+                    message: 'Category added successfully',
+                    type: 'success'
+                });
+                setIsAdding(false);
+                setNewCategory({ name: '', description: '', isActive: true });
+                await fetchCategories();
+            }else{
+                // console.log(response?.response?.data?.message);
+                setPopUpMessage({
+                    show: true,
+                    message: response?.response?.data?.message || 'Error adding category',
+                    type: 'error'
+                });
+            }
+        }catch(error){
+            setPopUpMessage({
+                show: true,
+                message: 'Error adding category',
+                type: 'error'
+            });
+        }finally{
+            setIsLoading(false);
+        }
     };
 
     const handleCancel = () => {
-        setNewCategory({ name: '', description: '' });
+        setNewCategory({ name: '', description: '', isActive: true });
         setIsAdding(false);
     };
 
+    // Edit Overlay State
+    const [editOverlayOpen, setEditOverlayOpen] = useState(false);
+    const [selectedCategory, setSelectedCategory] = useState<Categories | null>(null);
+
+    const handleEdit = (category: CategoriesQuery) => {
+        setSelectedCategory(category);
+        setEditOverlayOpen(true);
+    };
+
+    const handleUpdateCategory = async (updatedCategory: CategoriesQuery) => {
+        if (!updatedCategory.name) return; // Basic validation
+
+        const newEntry: Categories = {
+            name: updatedCategory.name,
+            description: updatedCategory.description,
+            isActive: updatedCategory.is_active
+        };
+
+        try{
+            setIsLoading(true);
+            const response: any = await api.put(`/api/admin/categories/update-category/${updatedCategory.id}`, newEntry);
+            if(response.status === 200){
+                await fetchCategories();
+                setPopUpMessage({
+                    show: true,
+                    message: response.response?.data?.message || 'Category updated successfully',
+                    type: 'success'
+                });
+            }else{
+                setPopUpMessage({
+                    show: true,
+                    message: response.response?.data?.message || 'Error updating category',
+                    type: 'error'
+                });
+            }
+        }catch(error){
+            setPopUpMessage({
+                show: true,
+                message: 'Error updating category',
+                type: 'error'
+            });
+        }finally{
+            setIsLoading(false);
+        }
+    };
+
+    const handleDeleteCategory = async (categoryId: string) => {
+        try{
+            setIsLoading(true);
+            const response: any = await api.delete(`/api/admin/categories/delete-category/${categoryId}`);
+            if(response.status === 200){
+                await fetchCategories();
+                setPopUpMessage({
+                    show: true,
+                    message: response.response?.data?.message || 'Category deleted successfully',
+                    type: 'success'
+                });
+            }else{
+                setPopUpMessage({
+                    show: true,
+                    message: response.response?.data?.message || 'Error deleting category',
+                    type: 'error'
+                });
+            }
+        }catch(error){
+            setPopUpMessage({
+                show: true,
+                message: 'Error deleting category',
+                type: 'error'
+            });
+        }finally{
+            setIsLoading(false);
+        }
+
+        setEditOverlayOpen(false);
+        setSelectedCategory(null);
+    };
+
+    useEffect(() => {
+        setIsLoading(true);
+        setIsError(false);
+        (async () => {
+            try {
+                await fetchCategories();
+            } catch (error) {
+                setIsError(true);
+            }finally{
+                setIsLoading(false);
+            }
+        })();
+    }, []);
+
+    if(isError) return <ErrorWithRefreshButton onRefresh={() => fetchCategories()} />;
+    if(isLoading) return <LoadingSkeletonTable />;
+
     return (
         <div className="p-6">
+            
+            {
+                popUpMessage.show && (
+                    <PopUpMessage
+                        title={popUpMessage.type === 'success' ? 'Success' : 'Failed'}
+                        message={popUpMessage.message}
+                        type={popUpMessage.type}
+                        onClose={() => setPopUpMessage({show: false, message: '', type: 'success'})}
+                    />
+                )
+            }
+            {
+                editOverlayOpen && (
+                    <OverlayCategoryEditPage
+                        isOpen={editOverlayOpen}
+                        onClose={() => setEditOverlayOpen(false)}
+                        category={selectedCategory}
+                        onSave={handleUpdateCategory}
+                        onDelete={handleDeleteCategory}
+                    />
+                )
+            }
             <div className="mb-8">
                 <div className="flex items-center justify-between mb-4">
                     <div>
@@ -106,6 +264,17 @@ export default function CategoryPage() {
                                     placeholder="Deskripsi singkat kategori..."
                                     rows={3}
                                 />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                                <select
+                                    value={newCategory.isActive ? 'Active' : 'Inactive'}
+                                    onChange={(e) => setNewCategory({ ...newCategory, isActive: e.target.value === 'Active' })}
+                                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 bg-white"
+                                >
+                                    <option value="Active">Active</option>
+                                    <option value="Inactive">Inactive</option>
+                                </select>
                             </div>
                         </div>
                         <div className="flex items-center gap-3">
@@ -158,12 +327,15 @@ export default function CategoryPage() {
                                         Deskripsi
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs uppercase tracking-wider text-gray-600 font-semibold">
+                                        Status
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs uppercase tracking-wider text-gray-600 font-semibold">
                                         Aksi
                                     </th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200">
-                                {filteredCategories.map((category) => (
+                                {categories.map((category) => (
                                     <tr key={category.id} className="hover:bg-gray-50">
                                         <td className="px-6 py-4">
                                             <div className="text-sm font-medium text-gray-900">
@@ -181,18 +353,21 @@ export default function CategoryPage() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
+                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${category.is_active
+                                                    ? 'bg-green-100 text-green-800'
+                                                    : 'bg-gray-100 text-gray-800'
+                                                }`}>
+                                                {category.is_active ? 'Active' : 'Inactive'}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
                                                 <button
+                                                    onClick={() => handleEdit(category)}
                                                     className="p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors cursor-pointer"
                                                     title="Edit"
                                                 >
                                                     <Edit className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors cursor-pointer"
-                                                    title="Delete"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
                                                 </button>
                                             </div>
                                         </td>
@@ -203,6 +378,7 @@ export default function CategoryPage() {
                     </div>
                 </div>
             </div>
+            {/* Edit Overlay */}
         </div>
     );
 }

@@ -1,5 +1,5 @@
+import { createClient } from '@/libs/supabase/createBrowserClient';
 import axios from 'axios';
-import { createClient } from '@/utils/supabase/createBrowserClient';
 
 // another libs
 
@@ -8,7 +8,7 @@ import { createClient } from '@/utils/supabase/createBrowserClient';
 const apiURL = process.env.NEXT_PUBLIC_SERVER_API_URL;
 
 // state management
-let requestQueue : any[] = []; // store a pending request for new refresh token
+let requestQueue: any[] = []; // store a pending request for new refresh token
 let isRefreshing = false; // state for code refreshing, if an attempt had been made for refreshing new token, store a request in queue to proceed later on
 
 const axiosInterceptor = axios.create({
@@ -16,7 +16,7 @@ const axiosInterceptor = axios.create({
     withCredentials: true
 })
 
-function processQueue(error : any, token : any = null) {
+function processQueue(error: any, token: any = null) {
     requestQueue.forEach(promise => {
         if (error) {
             promise.reject(error);

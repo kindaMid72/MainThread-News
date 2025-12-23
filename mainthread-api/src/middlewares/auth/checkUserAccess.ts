@@ -1,13 +1,14 @@
 import createDatabaseAccess from "../../config/database/createDbAccess";
 import createUserInstance from "../../utils/supabase/createUserInstance";
 
-export default async function checkAdminAccess(authorization: string | undefined) { // authorization: Bearer <token>
+export default async function checkUserAccess(authorization: string | undefined) { // authorization: Bearer <token>
     try {
         if(!authorization) return false;
         const dbAccess = await createDatabaseAccess();
         // Use getUser() for secure server-side validation
         const supabase = await createUserInstance(authorization);
         const { data: { user }, error: userError } = await supabase.auth.getUser();
+        //console.log(user);
 
         if (userError || !user) return false;
 
@@ -16,10 +17,11 @@ export default async function checkAdminAccess(authorization: string | undefined
         // Use .in() for array comparison
         const { data, error } = await dbAccess
             .from('users_access')
-            .select('id')
-            .eq('id', userId)
-            .eq('role', 'writer')
+            .select('user_id')
+            .eq('user_id', userId)
+            .in('role', ['writer', 'admin', 'superadmin'])
             .single();
+        //console.log(data); // FIXME: 
 
         if (error || !data) return false;
 
