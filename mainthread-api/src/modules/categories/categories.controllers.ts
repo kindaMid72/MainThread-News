@@ -4,7 +4,7 @@ import express from 'express'
 import categoriesMiddlewares from './categories.middlewares';
 
 // services
-import { getAllCategoriesService, addCategoryService } from './categories.services';
+import { getAllCategoriesService, addCategoryService, updateCategoryService, deleteCategoryService } from './categories.services';
 
 // types
 import {
@@ -27,7 +27,6 @@ router.get('/get-all-categories', async (req, res) => {
 
 router.post('/add-category', async (req, res) => {
     try {
-        
         const { name, description, isActive } = req.body;
         // check input
         if(!name) return res.status(400).json({ message: 'Name is required' });
@@ -45,11 +44,37 @@ router.post('/add-category', async (req, res) => {
     }
 } )
 
-router.put('update-category', async (req, res) => {
+router.put('/update-category/:id', async (req, res) => {
     try {
-        
+        const {id} = req.params;
+        const {name, description, isActive} = req.body;
+        // check input
+        if(!id) return res.status(400).json({ message: 'Id is required' });
+        if(!name) return res.status(400).json({ message: 'Name is required' });
+        if(name.length < 3) return res.status(400).json({ message: 'Name must be at least 3 characters long' });
+        const updatedCategory: Categories = {
+            id,
+            name,
+            description,
+            isActive
+        };
+        const updateResult : boolean = await updateCategoryService(updatedCategory);   
+        if(!updateResult) return res.status(400).json({ message: 'Category already exists' });
+        return res.status(200).json({ message: 'Category updated successfully' });
     } catch (error) {
-        
+        return res.status(500).json({ message: 'Internal Server Error' });
+    }
+})
+
+router.delete('/delete-category/:id', async (req, res) => {
+    try {
+        const {id} = req.params;
+        if(!id) return res.status(400).json({ message: 'Id is required' });
+        const deleteResult : boolean = await deleteCategoryService({id});   
+        if(!deleteResult) return res.status(400).json({ message: 'Category not found' });
+        return res.status(200).json({ message: 'Category deleted successfully' });
+    } catch (error) {
+        return res.status(500).json({ message: 'Internal Server Error' });
     }
 })
 

@@ -9,7 +9,7 @@ interface OverlayCategoryEditPageProps {
     isOpen: boolean;
     onClose: () => void;
     category: CategoriesQuery | null;
-    onSave: (updatedCategory: Categories) => void;
+    onSave: (updatedCategory: CategoriesQuery) => void;
     onDelete: (categoryId: string) => void;
 }
 

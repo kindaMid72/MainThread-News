@@ -23,6 +23,13 @@ export default function CategoryPage() {
     const [isAdding, setIsAdding] = useState(false);
     const [newCategory, setNewCategory] = useState({ name: '', description: '', isActive: true });
 
+    // PopUpMessage State
+    const [popUpMessage, setPopUpMessage] = useState({
+        show: false,
+        message: '',
+        type: 'success'
+    });
+
     
     // async state
     const [isLoading, setIsLoading] = useState(false);
@@ -62,15 +69,30 @@ export default function CategoryPage() {
 
         try{
             setIsLoading(true);
-            const response = await api.post('/api/admin/categories/add-category', newEntry);
+            const response: any = await api.post('/api/admin/categories/add-category', newEntry);
             if(response.status === 200){
+                setPopUpMessage({
+                    show: true,
+                    message: 'Category added successfully',
+                    type: 'success'
+                });
                 setIsAdding(false);
                 setNewCategory({ name: '', description: '', isActive: true });
                 await fetchCategories();
+            }else{
+                // console.log(response?.response?.data?.message);
+                setPopUpMessage({
+                    show: true,
+                    message: response?.response?.data?.message || 'Error adding category',
+                    type: 'error'
+                });
             }
         }catch(error){
-            console.error('Error adding category:', error);
-            throw new Error(`Error adding category: ${error}`);
+            setPopUpMessage({
+                show: true,
+                message: 'Error adding category',
+                type: 'error'
+            });
         }finally{
             setIsLoading(false);
         }
@@ -85,19 +107,76 @@ export default function CategoryPage() {
     const [editOverlayOpen, setEditOverlayOpen] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState<Categories | null>(null);
 
-    const handleEdit = (category: Categories) => {
+    const handleEdit = (category: CategoriesQuery) => {
         setSelectedCategory(category);
         setEditOverlayOpen(true);
     };
 
-    const handleUpdateCategory = (updatedCategory: Categories) => {
-        setCategories(categories.map(c => c.id === updatedCategory.id ? updatedCategory : c));
-        setEditOverlayOpen(false);
-        setSelectedCategory(null);
+    const handleUpdateCategory = async (updatedCategory: CategoriesQuery) => {
+        if (!updatedCategory.name) return; // Basic validation
+
+        const newEntry: Categories = {
+            name: updatedCategory.name,
+            description: updatedCategory.description,
+            isActive: updatedCategory.is_active
+        };
+
+        try{
+            setIsLoading(true);
+            const response: any = await api.put(`/api/admin/categories/update-category/${updatedCategory.id}`, newEntry);
+            if(response.status === 200){
+                await fetchCategories();
+                setPopUpMessage({
+                    show: true,
+                    message: response.response?.data?.message || 'Category updated successfully',
+                    type: 'success'
+                });
+            }else{
+                setPopUpMessage({
+                    show: true,
+                    message: response.response?.data?.message || 'Error updating category',
+                    type: 'error'
+                });
+            }
+        }catch(error){
+            setPopUpMessage({
+                show: true,
+                message: 'Error updating category',
+                type: 'error'
+            });
+        }finally{
+            setIsLoading(false);
+        }
     };
 
-    const handleDeleteCategory = (categoryId: string) => {
-        setCategories(categories.filter(c => c.id !== categoryId));
+    const handleDeleteCategory = async (categoryId: string) => {
+        try{
+            setIsLoading(true);
+            const response: any = await api.delete(`/api/admin/categories/delete-category/${categoryId}`);
+            if(response.status === 200){
+                await fetchCategories();
+                setPopUpMessage({
+                    show: true,
+                    message: response.response?.data?.message || 'Category deleted successfully',
+                    type: 'success'
+                });
+            }else{
+                setPopUpMessage({
+                    show: true,
+                    message: response.response?.data?.message || 'Error deleting category',
+                    type: 'error'
+                });
+            }
+        }catch(error){
+            setPopUpMessage({
+                show: true,
+                message: 'Error deleting category',
+                type: 'error'
+            });
+        }finally{
+            setIsLoading(false);
+        }
+
         setEditOverlayOpen(false);
         setSelectedCategory(null);
     };
@@ -122,6 +201,16 @@ export default function CategoryPage() {
     return (
         <div className="p-6">
             
+            {
+                popUpMessage.show && (
+                    <PopUpMessage
+                        title={popUpMessage.type === 'success' ? 'Success' : 'Failed'}
+                        message={popUpMessage.message}
+                        type={popUpMessage.type}
+                        onClose={() => setPopUpMessage({show: false, message: '', type: 'success'})}
+                    />
+                )
+            }
             {
                 editOverlayOpen && (
                     <OverlayCategoryEditPage

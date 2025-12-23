@@ -1,7 +1,9 @@
 // repositories
 import {
     getAllCategories,
-    insertCategory
+    insertCategory,
+    updateCategory,
+    deleteCategory
 } from "./categories.repositories";
 
 // utils
@@ -42,5 +44,34 @@ export async function addCategoryService({name, description, isActive}: Categori
         return true;
     } catch (error) {
         throw new Error(`Error adding category: ${error}`);
+    }
+}
+
+export async function updateCategoryService({id, name, description, isActive}:  Categories): Promise<boolean> {
+    try {
+        // create slug
+        const slug = generateSlugConsistFromGivenString(name as string);
+        const updatedCategory: Categories = {
+            id,
+            name,
+            slug,
+            description,
+            isActive
+        };
+        const updateResult: boolean = await updateCategory(updatedCategory);   
+        if(!updateResult) return false;
+        return true;
+    } catch (error) {
+        throw new Error(`Error updating category: ${error}`);
+    }
+}
+
+export async function deleteCategoryService({id}: Categories){
+    try {
+        const deleteResult: boolean = await deleteCategory({id});   
+        if(!deleteResult) return false;
+        return true;
+    } catch (error) {
+        throw new Error(`Error deleting category: ${error}`);
     }
 }
