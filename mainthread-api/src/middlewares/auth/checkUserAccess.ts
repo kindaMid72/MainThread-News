@@ -8,6 +8,7 @@ export default async function checkUserAccess(authorization: string | undefined)
         // Use getUser() for secure server-side validation
         const supabase = await createUserInstance(authorization);
         const { data: { user }, error: userError } = await supabase.auth.getUser();
+        //console.log(user);
 
         if (userError || !user) return false;
 
@@ -16,10 +17,11 @@ export default async function checkUserAccess(authorization: string | undefined)
         // Use .in() for array comparison
         const { data, error } = await dbAccess
             .from('users_access')
-            .select('id')
-            .eq('id', userId)
+            .select('user_id')
+            .eq('user_id', userId)
             .in('role', ['writer', 'admin', 'superadmin'])
             .single();
+        //console.log(data); // FIXME: 
 
         if (error || !data) return false;
 

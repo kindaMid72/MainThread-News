@@ -30,6 +30,8 @@ export default function CategoryPage() {
 
     const fetchCategories = async () => {
         try {
+            setIsLoading(true);
+            setIsError(false);
             const data: CategoriesQuery[] = await api.get('/api/admin/categories/get-all-categories')
                 .then(res => res?.data)
                 .catch(error => {
@@ -43,24 +45,35 @@ export default function CategoryPage() {
             console.error('Error fetching categories:', error);
             throw new Error(`Error fetching categories: ${error}`);
         }
+        finally{
+            setIsLoading(false);
+        }
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         if (!newCategory.name) return; // Basic validation
-
-        const slug = newCategory.name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
+        
 
         const newEntry: Categories = {
-            id: String(categories.length + 1),
             name: newCategory.name,
             description: newCategory.description,
-            slug: slug,
             isActive: newCategory.isActive
         };
 
-        setCategories([...categories, newEntry]);
-        setNewCategory({ name: '', description: '', isActive: true });
-        setIsAdding(false);
+        try{
+            setIsLoading(true);
+            const response = await api.post('/api/admin/categories/add-category', newEntry);
+            if(response.status === 200){
+                setIsAdding(false);
+                setNewCategory({ name: '', description: '', isActive: true });
+                await fetchCategories();
+            }
+        }catch(error){
+            console.error('Error adding category:', error);
+            throw new Error(`Error adding category: ${error}`);
+        }finally{
+            setIsLoading(false);
+        }
     };
 
     const handleCancel = () => {

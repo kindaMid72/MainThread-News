@@ -18,3 +18,23 @@ export async function getAllCategories(): Promise<CategoriesQuery[]> {
         throw new Error(`Error fetching categories: ${error}`);
     }
 }
+
+export async function insertCategory(category: Categories): Promise<boolean> {
+    const db = await createDatabaseAccess();
+    try {
+        const {data: categoryData, error: categoryError} = await db
+            .from('categories')
+            .insert({
+                name: category.name,
+                slug: category.slug,
+                description: category.description,
+                is_active: category.isActive
+            })
+
+        if(categoryError) return false;
+            
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
