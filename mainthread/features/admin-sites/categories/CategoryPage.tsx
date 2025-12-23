@@ -1,8 +1,11 @@
+
+
 "use client";
 
 import { Category } from '@/types/Category.type';
-import { Edit, Plus, Save, Search, Trash2, X } from 'lucide-react';
+import { Edit, Plus, Save, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
+import OverlayCategoryEditPage from './categories-subpage/OverlayCategoryEditPage'
 
 // Initial mock data
 const initialCategories: Category[] = [
@@ -62,8 +65,40 @@ export default function CategoryPage() {
         setIsAdding(false);
     };
 
+    // Edit Overlay State
+    const [editOverlayOpen, setEditOverlayOpen] = useState(false);
+    const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+
+    const handleEdit = (category: Category) => {
+        setSelectedCategory(category);
+        setEditOverlayOpen(true);
+    };
+
+    const handleUpdateCategory = (updatedCategory: Category) => {
+        setCategories(categories.map(c => c.id === updatedCategory.id ? updatedCategory : c));
+        setEditOverlayOpen(false);
+        setSelectedCategory(null);
+    };
+    
+    const handleDeleteCategory = (categoryId: string) => {
+        setCategories(categories.filter(c => c.id !== categoryId));
+        setEditOverlayOpen(false);
+        setSelectedCategory(null);
+    };
+    
     return (
         <div className="p-6">
+            {
+                editOverlayOpen && (
+                    <OverlayCategoryEditPage
+                        isOpen={editOverlayOpen}
+                        onClose={() => setEditOverlayOpen(false)}
+                        category={selectedCategory}
+                        onSave={handleUpdateCategory}
+                        onDelete={handleDeleteCategory}
+                    />
+                )
+            }
             <div className="mb-8">
                 <div className="flex items-center justify-between mb-4">
                     <div>
@@ -183,6 +218,7 @@ export default function CategoryPage() {
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
                                                 <button
+                                                    onClick={() => handleEdit(category)}
                                                     className="p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors cursor-pointer"
                                                     title="Edit"
                                                 >
@@ -203,6 +239,7 @@ export default function CategoryPage() {
                     </div>
                 </div>
             </div>
+            {/* Edit Overlay */}
         </div>
     );
 }
