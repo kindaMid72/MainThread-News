@@ -19,15 +19,21 @@ export default function OverlayTeamEditPage({ isOpen, onClose, member, onSave, o
     const [editedMember, setEditedMember] = useState<TeamMember>(member);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+    const [isSaving, setIsSaving] = useState(false);
+
     const handleSave = () => {
+        setIsSaving(true);
         onSave(editedMember);
         onClose();
+        setIsSaving(false);
     };
     
     const handleDelete = () => {
+        setIsSaving(true);
         onDelete(member.id);
         setShowDeleteConfirm(false);
         onClose();
+        setIsSaving(false);
     };
     
     return (
@@ -136,6 +142,7 @@ export default function OverlayTeamEditPage({ isOpen, onClose, member, onSave, o
                 <div className="px-6 py-4 bg-gray-50 border-t flex items-center justify-between">
                     <button
                         onClick={() => setShowDeleteConfirm(true)}
+                        disabled={isSaving}
                         className="flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 px-4 py-2 rounded-lg transition-colors text-sm font-medium"
                     >
                         <Trash2 className="w-4 h-4" />
@@ -145,13 +152,15 @@ export default function OverlayTeamEditPage({ isOpen, onClose, member, onSave, o
                     <div className="flex items-center gap-3">
                         <button
                             onClick={onClose}
+                            disabled={isSaving}
                             className="px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-lg font-medium transition-colors text-sm"
                         >
                             Batalkan
                         </button>
                         <button
                             onClick={handleSave}
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors shadow-sm text-sm"
+                            disabled={isSaving}
+                            className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-900 text-white rounded-lg font-medium transition-colors shadow-sm text-sm"
                         >
                             <Save className="w-4 h-4" />
                             Simpan Perubahan

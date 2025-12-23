@@ -2,92 +2,113 @@
 
 "use client";
 
-import { Category } from '@/types/Category.type';
+import { Categories, CategoriesQuery } from '@/types/Category.type';
 import { Edit, Plus, Save, Trash2, X } from 'lucide-react';
-import { useState } from 'react';
-import OverlayCategoryEditPage from './categories-subpage/OverlayCategoryEditPage'
+import { useEffect, useState } from 'react';
+import OverlayCategoryEditPage from './categories-subpage/OverlayCategoryEditPage';
 
-// Initial mock data
-const initialCategories: Category[] = [
-    {
-        id: '1',
-        name: 'Teknologi',
-        slug: 'teknologi',
-        description: 'Berita terkini seputar teknologi dan inovasi'
-    },
-    {
-        id: '2',
-        name: 'Gaya Hidup',
-        slug: 'gaya-hidup',
-        description: 'Tips dan tren gaya hidup masa kini'
-    },
-    {
-        id: '3',
-        name: 'Olahraga',
-        slug: 'olahraga',
-        description: 'Update skor dan berita olahraga terbaru'
-    }
-];
+// api caller
+import api from '@/libs/axiosInterceptor/axiosAdminInterceptor';
+
+// components
+import PopUpMessage from '@/components/PopUpMessage';
+import ErrorWithRefreshButton from '@/components/ErrorWithRefreshButton';
+import LoadingSkeletonTable from '@/components/LoadingSkeletonTabel';
 
 export default function CategoryPage() {
-    const [categories, setCategories] = useState<Category[]>(initialCategories);
+    const [categories, setCategories] = useState<CategoriesQuery[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
 
     // Form State
     const [isAdding, setIsAdding] = useState(false);
-    const [newCategory, setNewCategory] = useState({ name: '', description: '' });
+    const [newCategory, setNewCategory] = useState({ name: '', description: '', isActive: true });
 
-    const filteredCategories = categories.filter(category =>
-        category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        category.slug.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        category.description.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    
+    // async state
+    const [isLoading, setIsLoading] = useState(false);
+    const [isError, setIsError] = useState(false);
+
+    const fetchCategories = async () => {
+        try {
+            const data: CategoriesQuery[] = await api.get('/api/admin/categories/get-all-categories')
+                .then(res => res?.data)
+                .catch(error => {
+                    throw new Error(`Error fetching categories: ${error}`);
+                });
+
+            if (!data) throw new Error('Error fetching categories');
+
+            setCategories(data);
+        } catch (error) {
+            console.error('Error fetching categories:', error);
+            throw new Error(`Error fetching categories: ${error}`);
+        }
+    };
 
     const handleSave = () => {
         if (!newCategory.name) return; // Basic validation
 
         const slug = newCategory.name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
 
-        const newEntry: Category = {
+        const newEntry: Categories = {
             id: String(categories.length + 1),
             name: newCategory.name,
             description: newCategory.description,
-            slug: slug
+            slug: slug,
+            isActive: newCategory.isActive
         };
 
         setCategories([...categories, newEntry]);
-        setNewCategory({ name: '', description: '' });
+        setNewCategory({ name: '', description: '', isActive: true });
         setIsAdding(false);
     };
 
     const handleCancel = () => {
-        setNewCategory({ name: '', description: '' });
+        setNewCategory({ name: '', description: '', isActive: true });
         setIsAdding(false);
     };
 
     // Edit Overlay State
     const [editOverlayOpen, setEditOverlayOpen] = useState(false);
-    const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+    const [selectedCategory, setSelectedCategory] = useState<Categories | null>(null);
 
-    const handleEdit = (category: Category) => {
+    const handleEdit = (category: Categories) => {
         setSelectedCategory(category);
         setEditOverlayOpen(true);
     };
 
-    const handleUpdateCategory = (updatedCategory: Category) => {
+    const handleUpdateCategory = (updatedCategory: Categories) => {
         setCategories(categories.map(c => c.id === updatedCategory.id ? updatedCategory : c));
         setEditOverlayOpen(false);
         setSelectedCategory(null);
     };
-    
+
     const handleDeleteCategory = (categoryId: string) => {
         setCategories(categories.filter(c => c.id !== categoryId));
         setEditOverlayOpen(false);
         setSelectedCategory(null);
     };
-    
+
+    useEffect(() => {
+        setIsLoading(true);
+        setIsError(false);
+        (async () => {
+            try {
+                await fetchCategories();
+            } catch (error) {
+                setIsError(true);
+            }finally{
+                setIsLoading(false);
+            }
+        })();
+    }, []);
+
+    if(isError) return <ErrorWithRefreshButton onRefresh={() => fetchCategories()} />;
+    if(isLoading) return <LoadingSkeletonTable />;
+
     return (
         <div className="p-6">
+            
             {
                 editOverlayOpen && (
                     <OverlayCategoryEditPage
@@ -142,6 +163,17 @@ export default function CategoryPage() {
                                     rows={3}
                                 />
                             </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                                <select
+                                    value={newCategory.isActive ? 'Active' : 'Inactive'}
+                                    onChange={(e) => setNewCategory({ ...newCategory, isActive: e.target.value === 'Active' })}
+                                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 bg-white"
+                                >
+                                    <option value="Active">Active</option>
+                                    <option value="Inactive">Inactive</option>
+                                </select>
+                            </div>
                         </div>
                         <div className="flex items-center gap-3">
                             <button
@@ -193,12 +225,15 @@ export default function CategoryPage() {
                                         Deskripsi
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs uppercase tracking-wider text-gray-600 font-semibold">
+                                        Status
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs uppercase tracking-wider text-gray-600 font-semibold">
                                         Aksi
                                     </th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200">
-                                {filteredCategories.map((category) => (
+                                {categories.map((category) => (
                                     <tr key={category.id} className="hover:bg-gray-50">
                                         <td className="px-6 py-4">
                                             <div className="text-sm font-medium text-gray-900">
@@ -216,6 +251,14 @@ export default function CategoryPage() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
+                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${category.is_active
+                                                    ? 'bg-green-100 text-green-800'
+                                                    : 'bg-gray-100 text-gray-800'
+                                                }`}>
+                                                {category.is_active ? 'Active' : 'Inactive'}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
                                                 <button
                                                     onClick={() => handleEdit(category)}
@@ -223,12 +266,6 @@ export default function CategoryPage() {
                                                     title="Edit"
                                                 >
                                                     <Edit className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors cursor-pointer"
-                                                    title="Delete"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
                                                 </button>
                                             </div>
                                         </td>

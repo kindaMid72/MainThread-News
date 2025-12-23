@@ -1,23 +1,25 @@
 "use client";
 
 import ConfirmationMessage from "@/components/ConfirmationMessage";
-import { Category } from "@/types/Category.type";
+import { Categories, CategoriesQuery } from "@/types/Category.type";
 import { AlignLeft, FileText, Save, Trash2, Type, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface OverlayCategoryEditPageProps {
     isOpen: boolean;
     onClose: () => void;
-    category: Category | null;
-    onSave: (updatedCategory: Category) => void;
+    category: CategoriesQuery | null;
+    onSave: (updatedCategory: Categories) => void;
     onDelete: (categoryId: string) => void;
 }
 
 export default function OverlayCategoryEditPage({ isOpen, onClose, category, onSave, onDelete }: OverlayCategoryEditPageProps) {
     if (!isOpen || !category) return null;
 
-    const [editedCategory, setEditedCategory] = useState<Category>(category);
+    const [editedCategory, setEditedCategory] = useState<CategoriesQuery>(category);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+    const [isSaving, setIsSaving] = useState(false);
 
     // Update local state when category prop changes
     useEffect(() => {
@@ -27,14 +29,18 @@ export default function OverlayCategoryEditPage({ isOpen, onClose, category, onS
     }, [category]);
 
     const handleSave = () => {
+        setIsSaving(true);
         onSave(editedCategory);
         onClose();
+        setIsSaving(false);
     };
 
     const handleDelete = () => {
-        onDelete(category.id);
+        setIsSaving(true);
+        onDelete(category.id as string);
         setShowDeleteConfirm(false);
         onClose();
+        setIsSaving(false);
     };
 
     return (
@@ -96,8 +102,9 @@ export default function OverlayCategoryEditPage({ isOpen, onClose, category, onS
                             <input
                                 type="text"
                                 value={editedCategory.slug}
+                                disabled={true}
                                 onChange={(e) => setEditedCategory({ ...editedCategory, slug: e.target.value })}
-                                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-gray-50 font-mono text-sm"
+                                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-gray-100 text-gray-600 font-mono text-sm"
                                 placeholder="slug-kategori"
                             />
                         </div>
@@ -114,6 +121,16 @@ export default function OverlayCategoryEditPage({ isOpen, onClose, category, onS
                                 placeholder="Deskripsi kategori..."
                             />
                         </div>
+                        <div>
+                            <select
+                                value={editedCategory.is_active ? 'Active' : 'Inactive'}
+                                onChange={(e) => setEditedCategory({ ...editedCategory, is_active: e.target.value === 'Active' })}
+                                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                            >
+                                <option value="Active">Active</option>
+                                <option value="Inactive">Inactive</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
@@ -121,6 +138,7 @@ export default function OverlayCategoryEditPage({ isOpen, onClose, category, onS
                 <div className="px-6 py-4 bg-gray-50 border-t flex items-center justify-between">
                     <button
                         onClick={() => setShowDeleteConfirm(true)}
+                        disabled={isSaving}
                         className="flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 px-4 py-2 rounded-lg transition-colors text-sm font-medium"
                     >
                         <Trash2 className="w-4 h-4" />
@@ -130,14 +148,15 @@ export default function OverlayCategoryEditPage({ isOpen, onClose, category, onS
                     <div className="flex items-center gap-3">
                         <button
                             onClick={onClose}
+                            disabled={isSaving}
                             className="px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-lg font-medium transition-colors text-sm"
                         >
                             Batalkan
                         </button>
                         <button
                             onClick={handleSave}
-                            disabled={!editedCategory.name}
-                            className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors shadow-sm text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={isSaving || !editedCategory.name}
+                            className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-900 text-white rounded-lg font-medium transition-colors shadow-sm text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <Save className="w-4 h-4" />
                             Simpan Perubahan

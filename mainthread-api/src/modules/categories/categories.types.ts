@@ -7,7 +7,7 @@ export interface Categories {
 }
 
 export interface CategoriesQuery {
-    id?:string;
+    id?: string;
     name?: string;
     slug?: string;
     description?: string;

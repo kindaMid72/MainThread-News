@@ -1,7 +1,7 @@
 import createDatabaseAccess from "../../config/database/createDbAccess";
 import createUserInstance from "../../utils/supabase/createUserInstance";
 
-export default async function checkAdminAccess(authorization: string | undefined) { // authorization: Bearer <token>
+export default async function checkUserAccess(authorization: string | undefined) { // authorization: Bearer <token>
     try {
         if(!authorization) return false;
         const dbAccess = await createDatabaseAccess();
@@ -18,7 +18,7 @@ export default async function checkAdminAccess(authorization: string | undefined
             .from('users_access')
             .select('id')
             .eq('id', userId)
-            .eq('role', 'writer')
+            .in('role', ['writer', 'admin', 'superadmin'])
             .single();
 
         if (error || !data) return false;
