@@ -40,3 +40,7 @@ export interface UserInvite{
     expired_at?: string;
     created_at?: string;
 }
+
+export const REDIS_KEY = {
+    USERS_ACCESS: 'users_access'
+} as const;

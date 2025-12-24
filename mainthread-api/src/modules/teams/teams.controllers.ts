@@ -15,6 +15,7 @@ router.get('/get-all-users', async (req, res) => {
         const users = await getAllUserService();
         return res.status(200).json(users);
     } catch (error) {
+        console.log('error occured in teams.controllers: ', error);
         return res.status(500).json({ message: 'Internal Server Error' });
     }
 });

@@ -7,3 +7,6 @@ SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SECRET_KEY=your_supabase_secret_key
 
 DOMAIN_NAME=your_domain_name
+
+REDIS_REST_URL=your_upstash_redis_rest_url
+REDIS_REST_TOKEN=your_upstash_redis_rest_token

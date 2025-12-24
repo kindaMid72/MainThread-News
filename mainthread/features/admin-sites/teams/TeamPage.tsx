@@ -47,7 +47,10 @@ export default function TeamPage() {
         try {
             const response = await api.get(`/api/admin/teams/get-all-users`);
             const data: TeamMember[] = response.data;
-            if(data){
+            if(!data){
+                setTeam([]); // set empty array
+                setIsError(true);
+            }else{
                 setIsError(false);
             }
             setTeam(data);
