@@ -3,7 +3,8 @@ import { type } from "os";
 import createDatabaseAccess from "../../config/database/createDbAccess";
 import redis from "../../config/redis/createRedisAccess";
 // import types
-import { TeamMember, TeamMemberQuery, TeamMemberCreate, UserInvite, REDIS_KEY } from "./teams.types";
+import { TeamMember, TeamMemberQuery, TeamMemberCreate, UserInvite } from "./teams.types";
+import { REDIS_KEY } from "../../const/const.redis";
 
 // libs
 import bcrypt from 'bcrypt';
@@ -61,6 +62,8 @@ export async function updateUser({id, name, role, isActive}: TeamMember) {
 
     // invalidate redis cache
     await redis.del(REDIS_KEY.USERS_ACCESS);
+    await redis.del(REDIS_KEY.USER_ID(id as string));
+    await redis.del(REDIS_KEY.ADMIN_ID(id as string));
     
     if (error) return { error };
     return { data };
@@ -84,7 +87,9 @@ export async function deleteUser({id}: TeamMember) : Promise<boolean> {
 
     // invalidate redis cache
     await redis.del(REDIS_KEY.USERS_ACCESS);
-
+    await redis.del(REDIS_KEY.USER_ID(id as string));
+    await redis.del(REDIS_KEY.ADMIN_ID(id as string));
+    
     const { error: authError }: any = await dbAccess.auth.admin.deleteUser(deletedUserId.user_id);
     if (authError) throw Error(authError);
 
