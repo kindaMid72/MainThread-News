@@ -2,46 +2,100 @@
 
 "use client";
 
-import { Tag } from '@/types/Tag.type';
+import { Tag, TagQuery } from '@/types/Tag.type';
 import { Edit, Plus, Save, Trash2, X } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import OverlayTagsEditPage from './tags-subpage/OverlayTagsEditPage';
 
+// libs
+import api from '@/libs/axiosInterceptor/axiosAdminInterceptor'
+
+// components
+import LoadingSkeletonTable from '@/components/LoadingSkeletonTabel';
+import ErrorPage from '@/components/ErrorWithRefreshButton';
+import PopUpMessage from '@/components/PopUpMessage';
+
 // Initial mock data TODO: fetch data from server
-const initialTags: Tag[] = [
-    { id: '1', name: 'NextJS', slug: 'nextjs' },
-    { id: '2', name: 'React', slug: 'react' },
-    { id: '3', name: 'Tutorial', slug: 'tutorial' },
-    { id: '4', name: 'Programming', slug: 'programming' }
-];
 
 export default function TagsPage() {
-    const [tags, setTags] = useState<Tag[]>(initialTags);
+    const [tags, setTags] = useState<Tag[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
 
     // Form State
     const [isAdding, setIsAdding] = useState(false);
     const [newTagName, setNewTagName] = useState('');
 
-    const filteredTags = tags.filter(tag =>
-        tag.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        tag.slug.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // Loading State
+    const [isLoadingFetch, setIsLoadingFetch] = useState(true);
+    const [isErrorFetch, setIsErrorFetch] = useState(false);
 
-    const handleSave = () => {
-        if (!newTagName) return; // Basic validation
+    // loading save & edit
+    const [isLoadingSave, setIsLoadingSave] = useState(false);
 
-        const slug = newTagName.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
+    // popupmessage
+    const [popUpMessage, setPopUpMessage] = useState({
+        show: false,
+        title: '',
+        message: '',
+        type: 'success',
+    })
+
+    const fetchTags = async () => {
+        try{
+            setIsLoadingFetch(true);
+            const response = await api.get('/api/admin/tags/get-all-tags')
+            const data = await response.data;
+            setTags(data);
+        }catch(error){
+            setIsErrorFetch(true);
+        }finally{
+            setIsLoadingFetch(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchTags();
+    }, []);
+
+    const handleSave = async () => {
+        if (!newTagName.trim()) return; // Basic validation
 
         const newEntry: Tag = {
-            id: String(tags.length + 1),
             name: newTagName,
-            slug: slug
         };
 
-        setTags([...tags, newEntry]);
-        setNewTagName('');
-        setIsAdding(false);
+        try{
+            setIsLoadingSave(true);
+
+            const response: any = await api.post('/api/admin/tags/add-new-tag', newEntry)
+
+            if(response.status !== 200){
+                setPopUpMessage({
+                    show: true,
+                    title: 'Error',
+                    message: response?.response?.data?.message || 'Problem occured, maybe tag already exists',
+                    type: 'error',
+                })
+            }else{
+                setPopUpMessage({
+                    show: true,
+                    title: 'Success',
+                    message: response?.response?.data?.message || 'Tag added successfully',
+                    type: 'success',
+                })
+            }
+        }catch(error){
+            setPopUpMessage({
+                show: true,
+                title: 'Error',
+                message: 'Problem occured, maybe tag already exists',
+                type: 'error',
+            })
+        }finally{
+            fetchTags();
+            setIsAdding(false);
+            setIsLoadingSave(false);
+        }
     };
 
     const handleCancel = () => {
@@ -58,20 +112,91 @@ export default function TagsPage() {
         setEditOverlayOpen(true);
     };
 
-    const handleUpdateTag = (updatedTag: Tag) => {
-        setTags(tags.map(t => t.id === updatedTag.id ? updatedTag : t));
-        setEditOverlayOpen(false);
-        setSelectedTag(null);
+    const handleUpdateTag = async (updatedTag: Tag) => {
+        try{
+            setIsLoadingSave(true);
+            setIsLoadingFetch(true);
+            const response: any = await api.put(`/api/admin/tags/update-tag`, updatedTag); // pass newName and id
+            if(response.status !== 200){
+                setPopUpMessage({
+                    show: true,
+                    title: 'Error',
+                    message: 'Problem occured, maybe tag not found',
+                    type: 'error',
+                })
+            }else{
+                setPopUpMessage({
+                    show: true,
+                    title: 'Success',
+                    message: 'Tag updated successfully',
+                    type: 'success',
+                })
+            }
+        }catch(error){
+            setPopUpMessage({
+                show: true,
+                title: 'Error',
+                message: 'Problem occured, maybe tag not found',
+                type: 'error',
+            })
+        }finally{
+            fetchTags();
+            setIsLoadingSave(false);
+            setEditOverlayOpen(false);
+            setSelectedTag(null);
+        }
     };
     
-    const handleDeleteTag = (tagId: string) => {
-        setTags(tags.filter(t => t.id !== tagId));
-        setEditOverlayOpen(false);
-        setSelectedTag(null);
+    const handleDeleteTag = async (tagId: string) => {
+        try{
+            setIsLoadingSave(true);
+            setIsLoadingFetch(true);
+            const response = await api.delete(`/api/admin/tags/delete-tag/${tagId}`);
+            if(response.status !== 200){
+                setPopUpMessage({
+                    show: true,
+                    title: 'Error',
+                    message: 'Problem occured, maybe tag not found',
+                    type: 'error',
+                })
+            }else{
+                setPopUpMessage({
+                    show: true,
+                    title: 'Success',
+                    message: 'Tag deleted successfully',
+                    type: 'success',
+                })
+            }
+        }catch(error){
+            setPopUpMessage({
+                show: true,
+                title: 'Error',
+                message: 'Problem occured, maybe tag not found',
+                type: 'error',
+            })
+        }finally{
+            fetchTags();
+            setIsLoadingSave(false);
+        }
     };
-    
+    if(isLoadingFetch){
+        return <LoadingSkeletonTable />;
+    }
+    if(isErrorFetch){
+        return <ErrorPage onRefresh={fetchTags} />;
+    }
+
     return (
         <div className="p-6">
+
+            {popUpMessage.show && (
+                <PopUpMessage
+                    title={popUpMessage.title}
+                    message={popUpMessage.message}
+                    type={popUpMessage.type}
+                    onClose={() => setPopUpMessage({ show: false, title: '', message: '', type: 'success' })}
+                />
+            )}
             {/* Edit Overlay */}
             {editOverlayOpen && (
                 <OverlayTagsEditPage
@@ -119,18 +244,19 @@ export default function TagsPage() {
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={handleSave}
-                                disabled={!newTagName}
+                                disabled={!newTagName || isLoadingSave}
                                 className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                             >
                                 <Save className="w-4 h-4" />
-                                Simpan
+                                Save
                             </button>
                             <button
                                 onClick={handleCancel}
+                                disabled={isLoadingSave}
                                 className="flex items-center gap-2 bg-white text-gray-700 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
                             >
                                 <X className="w-4 h-4" />
-                                Batalkan
+                                Cancel
                             </button>
                         </div>
                     </div>
@@ -139,7 +265,7 @@ export default function TagsPage() {
                 {/* Content Area */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {/* Search & List */}
-                    <div className="md:col-span-3 bg-white rounded-lg shadow-sm border overflow-hidden">
+                    <div className="md:col-span-3 bg-white rounded-lg shadow-sm border overflow-auto">
                         {/* <div className="p-4 border-b bg-gray-50">
                             <div className="relative max-w-sm">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -155,35 +281,29 @@ export default function TagsPage() {
 
                         <div className="divide-y divide-gray-100">
                             <div className="grid grid-cols-12 gap-4 px-6 py-3 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                <div className="col-span-4">Nama Tag</div>
-                                <div className="col-span-5">Slug</div>
-                                <div className="col-span-3 text-right">Aksi</div>
+                                <div className="col-span-4">Name Tag</div>
+                                <div className="col-span-6">Slug</div>
+                                <div className="col-span-2 text-center ">Action</div>
                             </div>
 
-                            {filteredTags.length > 0 ? (
-                                filteredTags.map((tag) => (
+                            {tags.length > 0 ? (
+                                tags.map((tag) => (
                                     <div key={tag.id} className="grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-gray-50 transition-colors">
                                         <div className="col-span-4 font-medium text-gray-900">
                                             {tag.name}
                                         </div>
-                                        <div className="col-span-5">
+                                        <div className="col-span-6">
                                             <span className="text-sm text-gray-500 font-mono bg-gray-100 px-2 py-1 rounded">
                                                 {tag.slug}
                                             </span>
                                         </div>
-                                        <div className="col-span-3 flex justify-end gap-2">
+                                        <div className="col-span-2 flex w-full justify-center gap-2">
                                             <button
                                                 onClick={() => handleEdit(tag)}
                                                 className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors cursor-pointer"
                                                 title="Edit"
                                             >
                                                 <Edit className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                                className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors cursor-pointer"
-                                                title="Delete"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
                                             </button>
                                         </div>
                                     </div>

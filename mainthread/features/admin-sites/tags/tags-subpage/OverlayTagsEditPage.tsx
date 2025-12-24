@@ -1,14 +1,16 @@
 "use client";
 
-import ConfirmationMessage from "@/components/ConfirmationMessage";
-import { Tag } from "@/types/Tag.type";
+import { Tag, TagQuery } from "@/types/Tag.type";
 import { AlignLeft, Save, Tag as TagIcon, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
+
+// components
+import ConfirmationMessage from "@/components/ConfirmationMessage";
 
 interface OverlayTagsEditPageProps {
     isOpen: boolean;
     onClose: () => void;
-    tag: Tag | null;
+    tag: TagQuery | null;
     onSave: (updatedTag: Tag) => void;
     onDelete: (tagId: string) => void;
 }
@@ -19,6 +21,8 @@ export default function OverlayTagsEditPage({ isOpen, onClose, tag, onSave, onDe
     const [editedTag, setEditedTag] = useState<Tag>(tag);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+    const [isSaving, setIsSaving] = useState(false);
+
     // Update local state when tag prop changes
     useEffect(() => {
         if (tag) {
@@ -27,14 +31,18 @@ export default function OverlayTagsEditPage({ isOpen, onClose, tag, onSave, onDe
     }, [tag]);
 
     const handleSave = () => {
-        onSave(editedTag);
+        setIsSaving(true);
+        onSave({id: editedTag.id, name: editedTag.name});
         onClose();
+        setIsSaving(false);
     };
 
     const handleDelete = () => {
-        onDelete(tag.id);
+        setIsSaving(true);
+        onDelete(tag.id as string);
         setShowDeleteConfirm(false);
         onClose();
+        setIsSaving(false);
     };
 
     return (
@@ -96,8 +104,9 @@ export default function OverlayTagsEditPage({ isOpen, onClose, tag, onSave, onDe
                             <input
                                 type="text"
                                 value={editedTag.slug}
+                                disabled={true}
                                 onChange={(e) => setEditedTag({ ...editedTag, slug: e.target.value })}
-                                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-gray-50 font-mono text-sm"
+                                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-gray-100 text-gray-600 font-mono text-sm"
                                 placeholder="slug-tag"
                             />
                         </div>
@@ -117,17 +126,18 @@ export default function OverlayTagsEditPage({ isOpen, onClose, tag, onSave, onDe
                     <div className="flex items-center gap-3">
                         <button
                             onClick={onClose}
+                            disabled={isSaving}
                             className="px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-lg font-medium transition-colors text-sm"
                         >
-                            Batalkan
+                            Cancel
                         </button>
                         <button
                             onClick={handleSave}
-                            disabled={!editedTag.name}
-                            className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors shadow-sm text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={!editedTag.name || isSaving}
+                            className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-900 text-white rounded-lg font-medium transition-colors shadow-sm text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <Save className="w-4 h-4" />
-                            Simpan Perubahan
+                            Save Changes
                         </button>
                     </div>
                 </div>
