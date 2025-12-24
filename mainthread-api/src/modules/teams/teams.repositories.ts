@@ -1,7 +1,10 @@
 // import database connection
+import { type } from "os";
 import createDatabaseAccess from "../../config/database/createDbAccess";
+import redis from "../../config/redis/createRedisAccess";
 // import types
 import { TeamMember, TeamMemberQuery, TeamMemberCreate, UserInvite } from "./teams.types";
+import { REDIS_KEY } from "../../const/const.redis";
 
 // libs
 import bcrypt from 'bcrypt';
@@ -10,11 +13,24 @@ export async function getAllUser() {
     // create db access
     const dbAccess = await createDatabaseAccess();
     // query users_access table & return all data
+    // redis cache
+    let member: TeamMemberQuery[] = [];
+
+    const cacheKey = REDIS_KEY.USERS_ACCESS;
+    const cachedData: object | null = await redis.get(cacheKey);
+
+    if (cachedData){
+        member = cachedData as TeamMemberQuery[];
+        return { data: member };
+    }
+
+
     const { data, error }: any = await dbAccess
         .from('users_access')
         .select('id, name, email, role, avatar_url, is_active');
 
-    const member: TeamMember[] = data?.map((item: TeamMemberQuery) => {
+        
+        member = data?.map((item: TeamMemberQuery) => {
         return {
             id: item.id,
             name: item.name,
@@ -26,6 +42,10 @@ export async function getAllUser() {
     });
 
     if (error) return { error };
+
+    // set redis cache
+    await redis.set(cacheKey, JSON.stringify(member));
+
     return { data: member };
 }
 
@@ -39,6 +59,11 @@ export async function updateUser({id, name, role, isActive}: TeamMember) {
         is_active: isActive,
     })
     .eq('id', id);
+
+    // invalidate redis cache
+    await redis.del(REDIS_KEY.USERS_ACCESS);
+    await redis.del(REDIS_KEY.USER_ID(id as string));
+    await redis.del(REDIS_KEY.ADMIN_ID(id as string));
     
     if (error) return { error };
     return { data };
@@ -59,6 +84,12 @@ export async function deleteUser({id}: TeamMember) : Promise<boolean> {
         .eq('id', id)
     // delete from auth.users
     if(deletedUserError) throw Error(deletedUserError);
+
+    // invalidate redis cache
+    await redis.del(REDIS_KEY.USERS_ACCESS);
+    await redis.del(REDIS_KEY.USER_ID(id as string));
+    await redis.del(REDIS_KEY.ADMIN_ID(id as string));
+    
     const { error: authError }: any = await dbAccess.auth.admin.deleteUser(deletedUserId.user_id);
     if (authError) throw Error(authError);
 
@@ -125,18 +156,22 @@ export async function insertUser({name, avatarUrl, email, role, password}: {name
     })
     if (error) return {data: null, error }
 
+    
     const userId: string = data.user.id;
     // insert user in user_access
     const { data: insertUserAccess, error: insertUserAccessError }: any = await dbAccess
-        .from('users_access')
-        .insert({
-            user_id: userId,
-            name: name,
-            email: email,
-            role: role,
-            avatar_url: avatarUrl,
-            is_active: true,
-        })
+    .from('users_access')
+    .insert({
+        user_id: userId,
+        name: name,
+        email: email,
+        role: role,
+        avatar_url: avatarUrl,
+        is_active: true,
+    })
+    
+    // invalidate redis cache
+    await redis.del(REDIS_KEY.USERS_ACCESS);
 
     if (insertUserAccessError) return {data: null, error: insertUserAccessError };
     return {data: insertUserAccess, error: null};
