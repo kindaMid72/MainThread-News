@@ -1,14 +1,14 @@
 "use client";
 
 import ConfirmationMessage from "@/components/ConfirmationMessage";
-import { Tag } from "@/types/Tag.type";
+import { Tag, TagQuery } from "@/types/Tag.type";
 import { AlignLeft, Save, Tag as TagIcon, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface OverlayTagsEditPageProps {
     isOpen: boolean;
     onClose: () => void;
-    tag: Tag | null;
+    tag: TagQuery | null;
     onSave: (updatedTag: Tag) => void;
     onDelete: (tagId: string) => void;
 }
@@ -32,7 +32,7 @@ export default function OverlayTagsEditPage({ isOpen, onClose, tag, onSave, onDe
     };
 
     const handleDelete = () => {
-        onDelete(tag.id);
+        onDelete(tag.id as string);
         setShowDeleteConfirm(false);
         onClose();
     };
