@@ -83,7 +83,6 @@ export default function TagsPage() {
                     message: response?.response?.data?.message || 'Tag added successfully',
                     type: 'success',
                 })
-                
             }
         }catch(error){
             setPopUpMessage({
@@ -113,16 +112,72 @@ export default function TagsPage() {
         setEditOverlayOpen(true);
     };
 
-    const handleUpdateTag = (updatedTag: Tag) => {
-        setTags(tags.map(t => t.id === updatedTag.id ? updatedTag : t));
-        setEditOverlayOpen(false);
-        setSelectedTag(null);
+    const handleUpdateTag = async (updatedTag: Tag) => {
+        try{
+            setIsLoadingSave(true);
+            setIsLoadingFetch(true);
+            const response: any = await api.put(`/api/admin/tags/update-tag`, updatedTag); // pass newName and id
+            if(response.status !== 200){
+                setPopUpMessage({
+                    show: true,
+                    title: 'Error',
+                    message: 'Problem occured, maybe tag not found',
+                    type: 'error',
+                })
+            }else{
+                setPopUpMessage({
+                    show: true,
+                    title: 'Success',
+                    message: 'Tag updated successfully',
+                    type: 'success',
+                })
+            }
+        }catch(error){
+            setPopUpMessage({
+                show: true,
+                title: 'Error',
+                message: 'Problem occured, maybe tag not found',
+                type: 'error',
+            })
+        }finally{
+            fetchTags();
+            setIsLoadingSave(false);
+            setEditOverlayOpen(false);
+            setSelectedTag(null);
+        }
     };
     
-    const handleDeleteTag = (tagId: string) => {
-        setTags(tags.filter(t => t.id !== tagId));
-        setEditOverlayOpen(false);
-        setSelectedTag(null);
+    const handleDeleteTag = async (tagId: string) => {
+        try{
+            setIsLoadingSave(true);
+            setIsLoadingFetch(true);
+            const response = await api.delete(`/api/admin/tags/delete-tag/${tagId}`);
+            if(response.status !== 200){
+                setPopUpMessage({
+                    show: true,
+                    title: 'Error',
+                    message: 'Problem occured, maybe tag not found',
+                    type: 'error',
+                })
+            }else{
+                setPopUpMessage({
+                    show: true,
+                    title: 'Success',
+                    message: 'Tag deleted successfully',
+                    type: 'success',
+                })
+            }
+        }catch(error){
+            setPopUpMessage({
+                show: true,
+                title: 'Error',
+                message: 'Problem occured, maybe tag not found',
+                type: 'error',
+            })
+        }finally{
+            fetchTags();
+            setIsLoadingSave(false);
+        }
     };
     if(isLoadingFetch){
         return <LoadingSkeletonTable />;
@@ -210,7 +265,7 @@ export default function TagsPage() {
                 {/* Content Area */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {/* Search & List */}
-                    <div className="md:col-span-3 bg-white rounded-lg shadow-sm border overflow-hidden">
+                    <div className="md:col-span-3 bg-white rounded-lg shadow-sm border overflow-auto">
                         {/* <div className="p-4 border-b bg-gray-50">
                             <div className="relative max-w-sm">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -226,9 +281,9 @@ export default function TagsPage() {
 
                         <div className="divide-y divide-gray-100">
                             <div className="grid grid-cols-12 gap-4 px-6 py-3 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                <div className="col-span-4">Nama Tag</div>
-                                <div className="col-span-5">Slug</div>
-                                <div className="col-span-3 text-right">Aksi</div>
+                                <div className="col-span-4">Name Tag</div>
+                                <div className="col-span-6">Slug</div>
+                                <div className="col-span-2 text-center ">Action</div>
                             </div>
 
                             {tags.length > 0 ? (
@@ -237,24 +292,18 @@ export default function TagsPage() {
                                         <div className="col-span-4 font-medium text-gray-900">
                                             {tag.name}
                                         </div>
-                                        <div className="col-span-5">
+                                        <div className="col-span-6">
                                             <span className="text-sm text-gray-500 font-mono bg-gray-100 px-2 py-1 rounded">
                                                 {tag.slug}
                                             </span>
                                         </div>
-                                        <div className="col-span-3 flex justify-end gap-2">
+                                        <div className="col-span-2 flex w-full justify-center gap-2">
                                             <button
                                                 onClick={() => handleEdit(tag)}
                                                 className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors cursor-pointer"
                                                 title="Edit"
                                             >
                                                 <Edit className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                                className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors cursor-pointer"
-                                                title="Delete"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
                                             </button>
                                         </div>
                                     </div>
