@@ -101,9 +101,7 @@ router.post('/accept-invite-new-user', async (req, res) => {
 router.put('/update-user', async (req, res) => {
     try {
         // req: id, name, role, isActive
-        console.log('requeset update');
         const { id, name, role, isActive }: TeamMember = req.body;
-        console.log(req.body);
         // check id & name & role & isActive
         if (!id || !name || !role) {
             return res.status(400).json({ message: 'Id, name, role are required' });
@@ -111,12 +109,10 @@ router.put('/update-user', async (req, res) => {
         // call services, return true if success false if failed
         const requester = req.headers.authorization;
         const updateUser: boolean = await updateUserService({ requester, id, name, role, isActive });
-        console.log('user updated: ', updateUser);
         if (!updateUser) {
             return res.status(400).json({ message: 'Failed to update user' });
         }
         const adminId = await extractIdFromToken(req.headers.authorization as string);
-        console.log('attempt logging: ',adminId);
         await logAdminAction({
             adminId: adminId as string,
             action: 'update user',
@@ -124,7 +120,6 @@ router.put('/update-user', async (req, res) => {
             entityId: id,
             metadata: { id, name, role, isActive },
         });
-
         return res.status(200).json({ message: 'User updated successfully' });
     } catch (error) {
         console.log('error occured in teams.controllers: ', error);

@@ -7,7 +7,6 @@ export default async function logAdminAction({
     entityType,
     metadata }: { adminId?: string, action?: string, entityId?: string, entityType?: string, metadata?: object }): Promise<void> {
     try {
-        console.log('masuk nih log');
         const dbAccess = await createDatabaseAccess();
         await dbAccess.from('activity_logs').insert({
             user_id: adminId,
