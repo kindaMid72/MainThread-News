@@ -60,7 +60,7 @@ export default function ArticlesPage() {
 
     const filteredArticles = articles.filter(article => {
         const matchesStatus = statusFilter === 'all' || article.status === statusFilter;
-        const matchesSearch = article.title.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesSearch = article.title?.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesCategory = !categoryFilter || article.id === categoryFilter; // Simplified for demo
         return matchesStatus && matchesSearch && matchesCategory;
     });
@@ -83,7 +83,7 @@ export default function ArticlesPage() {
                         <p className="text-gray-600">Kelola semua artikel di sistem</p>
                     </div>
                     <Link
-                        href={`/admin/${params.userId}/articles/new`}
+                        href={`/admin/${params.userId}/articles/edit/${'newId'}`}
                         className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
                     >
                         <Plus className="w-5 h-5" />
@@ -162,89 +162,96 @@ export default function ArticlesPage() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200">
-                                {filteredArticles.map((article) => (
-                                    <tr key={article.id} className="hover:bg-gray-50">
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-start gap-3">
-                                                <img
-                                                    src={article.coverImage}
-                                                    alt={article.title}
-                                                    className="w-16 h-16 object-cover rounded shrink-0 bg-gray-200"
-                                                />
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="font-medium text-gray-900 line-clamp-2 mb-1">
-                                                        {article.title}
-                                                    </div>
-                                                    <div className="text-sm text-gray-500 line-clamp-1">
-                                                        {article.subtitle}
+                                {filteredArticles.map((article: ArticleTableViews) => 
+                                    {
+                                        if(!article.id || !article.title || !article.subtitle || !article.status || !article.authorName || !article.categoryName || !article.publishAt || !article.views || !article.coverImage || !article.slug){
+                                            return null;
+                                        }
+                                        return (
+                                        <tr key={article.id} className="hover:bg-gray-50">
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-start gap-3">
+                                                    <img
+                                                        src={article.coverImage}
+                                                        alt={article.title}
+                                                        className="w-16 h-16 object-cover rounded shrink-0 bg-gray-200"
+                                                    />
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="font-medium text-gray-900 line-clamp-2 mb-1">
+                                                            {article.title}
+                                                        </div>
+                                                        <div className="text-sm text-gray-500 line-clamp-1">
+                                                            {article.subtitle}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getStatusBadge(article.status)}`}>
-                                                {article.status}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="text-sm text-gray-900">{article.authorName}</div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="text-sm text-gray-900">{article.categoryName}</div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="text-sm text-gray-900">{format(new Date(article.publishAt), 'dd MMM yyyy')}</div>
-                                            <div className="text-xs text-gray-500">{format(new Date(article.publishAt), 'HH:mm')}</div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-1 text-sm text-gray-600">
-                                                <Eye className="w-4 h-4 text-gray-400" />
-                                                {article.views.toLocaleString('id-ID')}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-2">
-                                                <Link
-                                                    href={`/admin/${params.userId}/articles/edit/${article.id}`}
-                                                    className="p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                                                    title="Edit"
-                                                >
-                                                    <Edit className="w-4 h-4" />
-                                                </Link>
-                                                <Link
-                                                    href={`/admin/${params.userId}/articles/edit/${article.id}`}
-                                                    target="_blank"
-                                                    className="p-2 text-green-600 hover:bg-green-50 rounded transition-colors"
-                                                    title="Preview"
-                                                >
-                                                    <Eye className="w-4 h-4" />
-                                                </Link>
-                                                {article.status === 'draft' && (
-                                                    <button
-                                                        className="p-2 text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
-                                                        title="Publish"
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getStatusBadge(article.status)}`}>
+                                                    {article.status}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="text-sm text-gray-900">{article.authorName}</div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="text-sm text-gray-900">{article.categoryName}</div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="text-sm text-gray-900">{format(new Date(article.publishAt), 'dd MMM yyyy')}</div>
+                                                <div className="text-xs text-gray-500">{format(new Date(article.publishAt), 'HH:mm')}</div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-1 text-sm text-gray-600">
+                                                    <Eye className="w-4 h-4 text-gray-400" />
+                                                    {article.views.toLocaleString('id-ID')}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-2">
+                                                    <Link
+                                                        href={`/admin/${params.userId}/articles/edit/${article.id}`}
+                                                        className="p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                        title="Edit"
                                                     >
-                                                        <FileCheck className="w-4 h-4" />
-                                                    </button>
-                                                )}
-                                                {article.status === 'published' && (
-                                                    <button
-                                                        className="p-2 text-orange-600 cursor-pointer hover:bg-orange-50 rounded transition-colors"
-                                                        title="Unpublish"
+                                                        <Edit className="w-4 h-4" />
+                                                    </Link>
+                                                    <Link // 'archived' | 'draft' | 'review' | 'published';
+                                                        href={`/admin/${params.userId}/articles/edit/${article.id}`}
+                                                        target="_blank"
+                                                        className="p-2 text-green-600 hover:bg-green-50 rounded transition-colors"
+                                                        title="Preview"
                                                     >
-                                                        <FileX className="w-4 h-4" />
+                                                        <Eye className="w-4 h-4" />
+                                                    </Link>
+                                                    {article.status === 'draft' || article.status === 'review' && (
+                                                        <button
+                                                            className="p-2 text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
+                                                            title="Publish"
+                                                        >
+                                                            <FileCheck className="w-4 h-4" />
+                                                        </button>
+                                                    )}
+                                                    {article.status === 'published' && (
+                                                        <button
+                                                            className="p-2 text-orange-600 cursor-pointer hover:bg-orange-50 rounded transition-colors"
+                                                            title="Unpublish"
+                                                        >
+                                                            <FileX className="w-4 h-4" />
+                                                        </button>
+                                                    )}
+                                                    <button
+                                                        className="p-2 text-red-600 cursor-pointer hover:bg-red-50 rounded transition-colors"
+                                                        title="Delete"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
                                                     </button>
-                                                )}
-                                                <button
-                                                    className="p-2 text-red-600 cursor-pointer hover:bg-red-50 rounded transition-colors"
-                                                    title="Delete"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        )
+                                    }
+                                )}
                             </tbody>
                         </table>
                     </div>
