@@ -4,7 +4,7 @@ import ArticleEditPage from "@/features/admin-sites/articles/articles-subpage/Ar
 
 export default function EditArticle() {
     return (
-        <div>
+        <div className="bg-gray-50">
             <ArticleEditPage />
         </div>
     );

@@ -1,18 +1,18 @@
 "use client"
 
+import { EditorContent, EditorContext, generateJSON, useEditor } from "@tiptap/react"
 import { useEffect, useRef, useState } from "react"
-import { EditorContent, EditorContext, useEditor } from "@tiptap/react"
 
 // --- Tiptap Core Extensions ---
-import { StarterKit } from "@tiptap/starter-kit"
+import { Highlight } from "@tiptap/extension-highlight"
 import { Image } from "@tiptap/extension-image"
 import { TaskItem, TaskList } from "@tiptap/extension-list"
-import { TextAlign } from "@tiptap/extension-text-align"
-import { Typography } from "@tiptap/extension-typography"
-import { Highlight } from "@tiptap/extension-highlight"
 import { Subscript } from "@tiptap/extension-subscript"
 import { Superscript } from "@tiptap/extension-superscript"
+import { TextAlign } from "@tiptap/extension-text-align"
+import { Typography } from "@tiptap/extension-typography"
 import { Selection } from "@tiptap/extensions"
+import { StarterKit } from "@tiptap/starter-kit"
 
 // --- UI Primitives ---
 import { Button } from "@/components/tiptap-ui-primitive/button"
@@ -24,32 +24,32 @@ import {
 } from "@/components/tiptap-ui-primitive/toolbar"
 
 // --- Tiptap Node ---
-import { ImageUploadNode } from "@/components/tiptap-node/image-upload-node/image-upload-node-extension"
-import { HorizontalRule } from "@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node-extension"
 import "@/components/tiptap-node/blockquote-node/blockquote-node.scss"
 import "@/components/tiptap-node/code-block-node/code-block-node.scss"
-import "@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node.scss"
-import "@/components/tiptap-node/list-node/list-node.scss"
-import "@/components/tiptap-node/image-node/image-node.scss"
 import "@/components/tiptap-node/heading-node/heading-node.scss"
+import { HorizontalRule } from "@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node-extension"
+import "@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node.scss"
+import "@/components/tiptap-node/image-node/image-node.scss"
+import { ImageUploadNode } from "@/components/tiptap-node/image-upload-node/image-upload-node-extension"
+import "@/components/tiptap-node/list-node/list-node.scss"
 import "@/components/tiptap-node/paragraph-node/paragraph-node.scss"
 
 // --- Tiptap UI ---
-import { HeadingDropdownMenu } from "@/components/tiptap-ui/heading-dropdown-menu"
-import { ImageUploadButton } from "@/components/tiptap-ui/image-upload-button"
-import { ListDropdownMenu } from "@/components/tiptap-ui/list-dropdown-menu"
 import { BlockquoteButton } from "@/components/tiptap-ui/blockquote-button"
 import { CodeBlockButton } from "@/components/tiptap-ui/code-block-button"
 import {
   ColorHighlightPopover,
-  ColorHighlightPopoverContent,
   ColorHighlightPopoverButton,
+  ColorHighlightPopoverContent,
 } from "@/components/tiptap-ui/color-highlight-popover"
+import { HeadingDropdownMenu } from "@/components/tiptap-ui/heading-dropdown-menu"
+import { ImageUploadButton } from "@/components/tiptap-ui/image-upload-button"
 import {
-  LinkPopover,
-  LinkContent,
   LinkButton,
+  LinkContent,
+  LinkPopover,
 } from "@/components/tiptap-ui/link-popover"
+import { ListDropdownMenu } from "@/components/tiptap-ui/list-dropdown-menu"
 import { MarkButton } from "@/components/tiptap-ui/mark-button"
 import { TextAlignButton } from "@/components/tiptap-ui/text-align-button"
 import { UndoRedoButton } from "@/components/tiptap-ui/undo-redo-button"
@@ -60,9 +60,9 @@ import { HighlighterIcon } from "@/components/tiptap-icons/highlighter-icon"
 import { LinkIcon } from "@/components/tiptap-icons/link-icon"
 
 // --- Hooks ---
+import { useCursorVisibility } from "@/hooks/use-cursor-visibility"
 import { useIsBreakpoint } from "@/hooks/use-is-breakpoint"
 import { useWindowSize } from "@/hooks/use-window-size"
-import { useCursorVisibility } from "@/hooks/use-cursor-visibility"
 
 // --- Components ---
 import { ThemeToggle } from "@/components/tiptap-templates/simple/theme-toggle"
@@ -73,7 +73,6 @@ import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils"
 // --- Styles ---
 import "@/components/tiptap-templates/simple/simple-editor.scss"
 
-import content from "@/components/tiptap-templates/simple/data/content.json"
 
 const MainToolbarContent = ({
   onHighlighterClick,
@@ -183,7 +182,7 @@ const MobileToolbarContent = ({
   </>
 )
 
-export function SimpleEditor() {
+export function SimpleEditor({ value, onChange }: { value: string; onChange: (value: string) => void }) {
   const isMobile = useIsBreakpoint()
   const { height } = useWindowSize()
   const [mobileView, setMobileView] = useState<"main" | "highlighter" | "link">(
@@ -197,7 +196,7 @@ export function SimpleEditor() {
       attributes: {
         autocomplete: "off",
         autocorrect: "off",
-        autocapitalize: "off",
+        autocapitalize: "on",
         "aria-label": "Main content area, start typing to enter text.",
         class: "simple-editor",
       },
@@ -228,7 +227,10 @@ export function SimpleEditor() {
         onError: (error) => console.error("Upload failed:", error),
       }),
     ],
-    content,
+    content: generateJSON(value || "", [StarterKit]), // value: HTML string, convert to JSON
+    onUpdate: ({ editor }) => {
+      onChange(editor.getHTML()) // save HTML string to state
+    },
   })
 
   const rect = useCursorVisibility({
@@ -247,11 +249,12 @@ export function SimpleEditor() {
       <EditorContext.Provider value={{ editor }}>
         <Toolbar
           ref={toolbarRef}
+          className="w-full flex-wrap border-b border-gray-200 sticky top-0 z-10 bg-white"
           style={{
             ...(isMobile
               ? {
-                  bottom: `calc(100% - ${height - rect.y}px)`,
-                }
+                bottom: `calc(100% - ${height - rect.y}px)`,
+              }
               : {}),
           }}
         >
@@ -272,7 +275,7 @@ export function SimpleEditor() {
         <EditorContent
           editor={editor}
           role="presentation"
-          className="simple-editor-content"
+          className="simple-editor-content text-gray-900"
         />
       </EditorContext.Provider>
     </div>
