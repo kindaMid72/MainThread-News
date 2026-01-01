@@ -23,8 +23,8 @@ export async function createArticleReturnId({authorId}: {authorId: string}) : Pr
             is_headline: false,
             published_at: null,
             updated_at: new Date().toISOString(),
-            
-        } 
+
+        }
         const {data: article, error} = await db
             .from('articles')
             .insert(
@@ -64,7 +64,7 @@ export async function getArticlesFirstPage({limit, category, status, asc}: {limi
             .limit(limit + 1)
             .order('created_at', { ascending: asc })
 
-        if(statusCondition !== ''){
+        if (statusCondition !== '') {
             additionalCondition.push(statusCondition);
         }
 
@@ -112,9 +112,73 @@ export async function getArticlesNextPage({cursor, limit, direction, category, s
             .from('articles')
             .select()
             .limit(limit + 1)
-            .gte('created_at', cursorNext.createdAt)
             .order('created_at', { ascending: asc })
-        
+
+        // determine operator based on sort direction
+        if (asc) {
+            // Oldest first: next page means newer items (> cursor)
+            query = query.gt('created_at', cursorNext.createdAt);
+        } else {
+            // Newest first: next page means older items (< cursor)
+            query = query.lt('created_at', cursorNext.createdAt);
+        }
+
+        if (statusCondition !== '') {
+            additionalCondition.push(statusCondition);
+        }
+
+        if (categoryCondition !== '') {
+            additionalCondition.push(categoryCondition);
+        }
+
+        if (additionalCondition.length > 0) {
+            query = query.or(additionalCondition.join(','));
+        }
+        const { data: articles, error } = await query;
+
+        if (error) {
+            console.error('Error getting articles:', error);
+            throw error;
+        }
+
+        return articles;
+    } catch (error) {
+        console.error('Error getting articles:', error);
+        throw error;
+    }
+}
+
+// - previous page
+export async function getArticlesPreviousPage({cursor, limit, direction, category, status, asc}: {cursor: object, limit: number, direction: 'forward' | 'backward', category: string, status: string, asc: boolean}) {
+    try {
+        const db = await dbAccess();
+        const cursorPrev = cursor as {id: string, createdAt: string};
+
+        if(direction !== 'backward'){
+            throw new Error('Invalid direction');
+        }
+
+        const statusCondition = status === 'all' || !status ? '' : `status.eq.${status}`;
+        const categoryCondition = category === 'all' || !category ? '' : `category_id.eq.${category}`;
+
+        // query string
+        let additionalCondition = [];
+
+        let query = db
+            .from('articles')
+            .select()
+            .limit(limit + 1)
+            .order('created_at', { ascending: !asc }) // Always reverse sort to get nearest neighbors first
+
+        // determine operator based on sort direction
+        if (asc) {
+            // Oldest first: prev page means older items (< cursor)
+            query = query.lt('created_at', cursorPrev.createdAt);
+        } else {
+            // Newest first: prev page means newer items (> cursor)
+            query = query.gt('created_at', cursorPrev.createdAt);
+        }
+
         if(statusCondition !== ''){
             additionalCondition.push(statusCondition);
         }
@@ -133,20 +197,10 @@ export async function getArticlesNextPage({cursor, limit, direction, category, s
             throw error;
         }
 
+        // Always reverse the result because we fetched in reverse order
+        articles.reverse();
+
         return articles;
-    } catch (error) {
-        console.error('Error getting articles:', error);
-        throw error;
-    }
-}
-
-// - previous page
-export async function getArticlesPreviousPage({cursor, limit, direction, category, status}: {cursor: string, limit: number, direction: 'forward' | 'backward', category: string, status: string}) {
-    try {
-        const db = await dbAccess();
-        // TODO: implement pagination back and forward with cursor implementation
-
-        return []
     } catch (error) {
         console.error('Error getting articles:', error);
         throw error;

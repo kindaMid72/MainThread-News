@@ -25,6 +25,8 @@ export async function getArticlesService({ cursor, limit, direction, category, s
     // return articles, {nextCursor, prevCursor, hasPrev, hasNext}(encoded)
 
     // determine if the request is first page, next page, or previous page
+
+    console.log(cursor, limit, direction, category, status, asc);
     if (!cursor) {
         // first page
         let queryResult: ArticleQuery[] = await getArticlesFirstPage({ limit: limit as number, category: category as string, status: status as string, asc: asc as boolean });
@@ -32,6 +34,9 @@ export async function getArticlesService({ cursor, limit, direction, category, s
         // assign hasNext and hasPrev based on queryResult
         const hasNext = queryResult.length >= (limit || 0);
         const hasPrev = false;
+        if(hasNext){
+            queryResult.pop();
+        }
 
         // create next cursor and prev cursor
         const nextCursor = hasNext ? {id: queryResult[queryResult.length - 1].id, createdAt: queryResult[queryResult.length - 1].created_at} : null;
@@ -44,7 +49,6 @@ export async function getArticlesService({ cursor, limit, direction, category, s
             hasNext
         }
         const cursorEncoded: string = encodeObjectToBase64(newCursor);
-        queryResult.pop();
         return { articles: queryResult, cursor: cursorEncoded, hasNext, hasPrev };
 
     } else if (direction === 'forward') {
@@ -53,12 +57,15 @@ export async function getArticlesService({ cursor, limit, direction, category, s
         const queryResult: ArticleQuery[] = await getArticlesNextPage({ cursor: cursorDecoded.nextCursor, limit: limit as number, direction: direction as 'forward', category: category as string, status: status as string, asc: asc as boolean });
 
         // assign hasNext and hasPrev based on queryResult
-        const hasNext = queryResult.length === limit;
+        const hasNext = queryResult.length === (limit as number) + 1;
         const hasPrev = true;
+        const nextCursor = hasNext ? {id: queryResult[queryResult.length - 1].id, createdAt: queryResult[queryResult.length - 2].created_at} : null;
+        const prevCursor = {id: queryResult[0].id, createdAt: queryResult[0].created_at};
+        if(hasNext){
+            queryResult.pop();
+        }
 
         // create next cursor and prev cursor
-        const nextCursor = hasNext ? queryResult[queryResult.length - 1].id : null;
-        const prevCursor = cursorDecoded.prevCursor || null;
 
         const newCursor = {
             nextCursor,
@@ -71,16 +78,29 @@ export async function getArticlesService({ cursor, limit, direction, category, s
     } else if (direction === 'backward') {
         // previous page
         const cursorDecoded: any = decodeBase64ToObject(cursor);
-        const queryResult: any[] = await getArticlesPreviousPage({ cursor: cursor as string, limit: limit as number, direction: direction as 'backward', category: category as string, status: status as string });
+        const queryResult: any[] = await getArticlesPreviousPage({ cursor: cursorDecoded.prevCursor, limit: limit as number, direction: direction as 'backward', category: category as string, status: status as string, asc: asc as boolean });
 
         // assign hasNext and hasPrev based on queryResult
         const hasNext = true;
-        const hasPrev = queryResult.length === limit;
+        const hasPrev = queryResult.length === (limit as number) + 1;
+
+        if(hasPrev){
+            queryResult.shift();
+        }
+        // create next cursor and prev cursor
+        const nextCursor = hasNext ? { id: queryResult[queryResult.length - 1].id, createdAt: queryResult[queryResult.length - 1].created_at } : null;
+        const prevCursor = hasPrev ? { id: queryResult[0].id, createdAt: queryResult[0].created_at } : null;
+
+        const newCursor = {
+            nextCursor,
+            prevCursor,
+            hasPrev,
+            hasNext
+        }
+        const cursorEncoded: string = encodeObjectToBase64(newCursor);
+        return { articles: queryResult, cursor: cursorEncoded, hasNext, hasPrev };
     } else {
         throw new Error('Invalid direction');
     }
-
-    // return response, this is place holder
-    return { articles: [], cursor: '', hasPrev: false, hasNext: false };
 
 }

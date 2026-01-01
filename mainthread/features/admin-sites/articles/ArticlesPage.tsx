@@ -31,7 +31,7 @@ export default function ArticlesPage() {
     const [statusFilter, setStatusFilter] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('');
-    const [ascFilter, setAscFilter] = useState('');
+    const [ascFilter, setAscFilter] = useState('asc');
 
     // ui state
     const [isLoadingFetch, setIsLoadingFetch] = useState(true);
@@ -192,7 +192,7 @@ export default function ArticlesPage() {
         return <LoadingSkeletonTable />
     }
     if(isErrorFetch){
-        return <ErrorWithRefreshButton onRefresh={fetchArticles} />
+        return <ErrorWithRefreshButton onRefresh={initialFetch} />
     }
 
     return (

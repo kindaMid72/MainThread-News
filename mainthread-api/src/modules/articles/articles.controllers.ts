@@ -70,7 +70,7 @@ router.get('/get-articles-on-given-page', async (req, res) => {
             direction: req.query.direction as 'forward' | 'backward' || null,
             category: req.query.category as string || null,
             status: req.query.status as string || null,
-            asc: req.query.asc === 'true' || true,
+            asc: req.query.asc === 'true',
         };
 
         // call service, return [ArticleQuery], cursor(encoded): string
