@@ -2,18 +2,18 @@ export interface ArticleQuery {
     id?: string;
     title?: string;
     slug?: string;
-    excerpt?: string;
+    excerpt?: string | null;
     content_html?: string;
     thumbnail_url?: string;
-    category_id?: string;
+    category_id?: string | null;
     author_id?: string;
     status?: 'archived' | 'draft' | 'review' | 'published';     
-    source_type?: 'original' | 'syndicated';
+    source_type?: 'auto' | 'manual';
     source_ref?: string;
-    views_count?: number;
+    view_count?: number;
     is_breaking?: boolean;
     is_headline?: boolean;
-    publish_at?: string;
+    published_at?: string | null;
     updated_at?: string;
     created_at?: string;
 }
@@ -28,19 +28,19 @@ export interface Article{
     categoryId?: string;
     authorId?: string;
     status?: 'archived' | 'draft' | 'review' | 'published';
-    sourceType?: 'original' | 'syndicated';
+    sourceType?: 'auto' | 'manual';
     sourceRef?: string;
-    viewsCount?: number;
+    viewCount?: number;
     isBreaking?: boolean;
     isHeadline?: boolean;
-    publishAt?: string;
+    publishedAt?: string;
     updatedAt?: string;
-    created_at?: string;
+    createdAt?: string;
 }
 export interface ArticleTableViews{
   id?: string;
   title?: string;
-  subtitle?: string;
+  sourceType?: 'auto' | 'manual';
   status?: 'archived' | 'draft' | 'review' | 'published';
   authorName?: string;
   categoryName?: string;

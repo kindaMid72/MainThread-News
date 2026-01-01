@@ -210,7 +210,7 @@ export default function TagsPage() {
             <div className="mb-8">
                 <div className="flex items-center justify-between mb-4">
                     <div>
-                        <h1 className="text-3xl mb-2 font-bold">Manajemen Tag</h1>
+                        <h1 className="text-3xl mb-2 font-bold ">Manajemen Tag</h1>
                         <p className="text-gray-600">Kelola tag artikel di sistem</p>
                     </div>
                     {!isAdding && (

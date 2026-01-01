@@ -4,17 +4,25 @@ import { format } from 'date-fns';
 import { Edit, Eye, FileCheck, FileX, Plus, Search, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+
+// api
+import api from '@/libs/axiosInterceptor/axiosAdminInterceptor';
 
 // Data types
-import { ArticleTableViews } from '@/types/Article.type';
+import { ArticleQuery, ArticleTableViews, Article } from '@/types/Article.type';
+
+// components
+import PopUpMessage from '@/components/PopUpMessage';
+import LoadingSkeletonTable from '@/components/LoadingSkeletonTabel';
+import ErrorWithRefreshButton from '@/components/ErrorWithRefreshButton';
 
 // Sample placeholder data TODO: fetch real data, apply pagination
 const articles: ArticleTableViews[] = [
     {
         id: '1',
         title: 'Getting Started with Next.js',
-        subtitle: 'A comprehensive guide to building modern web apps',
+        sourceType: 'auto',
         status: 'published',
         authorName: 'Alice Johnson',
         categoryName: 'Technology',
@@ -26,7 +34,7 @@ const articles: ArticleTableViews[] = [
     {
         id: '2',
         title: 'The Future of Web Development',
-        subtitle: 'Trends to watch in 2025',
+        sourceType: 'auto',
         status: 'draft',
         authorName: 'Bob Smith',
         categoryName: 'Tech',
@@ -38,7 +46,7 @@ const articles: ArticleTableViews[] = [
     {
         id: '3',
         title: 'Understanding React Server Components',
-        subtitle: 'Deep dive into RSC',
+        sourceType: 'manual',
         status: 'review',
         authorName: 'Charlie',
         categoryName: 'Coding',
@@ -65,6 +73,21 @@ export default function ArticlesPage() {
         return matchesStatus && matchesSearch && matchesCategory;
     });
 
+    // ui state
+    const [isLoadingFetch, setIsLoadingFetch] = useState(true);
+    const [isErrorFetch, setIsErrorFetch] = useState(false);
+
+    const [isLoadingEdit, setIsLoadingEdit] = useState(false);
+    const [isErrorEdit, setIsErrorEdit] = useState(false);
+
+    const [popUpMessage, setPopUpMessage] = useState({
+        title: '',
+        message: '',
+        type: '',
+        duration: 2000,
+        onClose: () => {}
+    });
+
     const getStatusBadge = (status: string) => {
         const styles: Record<string, string> = {
             published: 'bg-green-100 text-green-800',
@@ -74,21 +97,87 @@ export default function ArticlesPage() {
         return styles[status] || styles.draft;
     };
 
+    // handler
+    // create new article
+    const handleCreateNewArticle = async () => {
+        setIsLoadingEdit(true);
+        const response = await api.post('/api/admin/articles/create-new-article');
+        if (response.status === 201) {
+            // extract id
+            const data: ArticleQuery = response.data;
+            const id: string = data.id as string;
+            setPopUpMessage({
+                title: 'Success',
+                message: 'Article created successfully',
+                type: 'success',
+                duration: 2000,
+                onClose: () => {}
+            });
+            router.push(`/admin/${params.userId}/articles/edit/${id}`); // fetch by edit page after created and redirect to edit page
+        }else{
+            setIsErrorEdit(true);
+            setPopUpMessage({
+                title: 'Error',
+                message: 'Failed to create article',
+                type: 'error',
+                duration: 2000,
+                onClose: () => {}
+            });
+            return;
+        }
+        setIsLoadingEdit(false);
+    };
+
+    // fetch data
+    const fetchArticles = async () => {
+        try {
+            setIsLoadingFetch(true);
+            // TODO: fetch data with pagination
+
+            // TODO: if error not occured, set error to false, otherwise error fetch to true
+            if('success'){
+                setIsErrorFetch(false);
+            }else{
+                setIsErrorFetch(true);
+            }
+        } catch (error) {
+            setIsErrorFetch(true);
+        } finally {
+            setIsLoadingFetch(false);
+        }
+    };
+
+
+    // useEffect handler
+    useEffect(() => {
+        fetchArticles();
+    }, []);
+
+    if(isLoadingFetch){
+        return <LoadingSkeletonTable />
+    }
+    if(isErrorFetch){
+        return <ErrorWithRefreshButton onRefresh={fetchArticles} />
+    }
+
     return (
         <div className="p-6">
+            
+
+
             <div className="mb-8">
                 <div className="flex items-center justify-between mb-4">
                     <div>
-                        <h1 className="text-3xl mb-2 font-bold">Manajemen Artikel</h1>
-                        <p className="text-gray-600">Kelola semua artikel di sistem</p>
+                        <h1 className="text-3xl mb-2 font-bold text-gray-900">Manage Articles</h1>
+                        <p className="text-gray-600">Manage all articles in the system</p>
                     </div>
-                    <Link
-                        href={`/admin/${params.userId}/articles/edit/${'newId'}`}
+                    <div
+                        onClick={handleCreateNewArticle}
                         className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
                     >
                         <Plus className="w-5 h-5" />
-                        Buat Artikel Baru
-                    </Link>
+                        Create New Article
+                    </div>
                 </div>
 
                 {/* Filters */}
@@ -164,7 +253,7 @@ export default function ArticlesPage() {
                             <tbody className="divide-y divide-gray-200">
                                 {filteredArticles.map((article: ArticleTableViews) => 
                                     {
-                                        if(!article.id || !article.title || !article.subtitle || !article.status || !article.authorName || !article.categoryName || !article.publishAt || !article.views || !article.coverImage || !article.slug){
+                                        if(!article.id || !article.title || !article.sourceType || !article.status || !article.authorName || !article.categoryName || !article.publishAt || !article.views || !article.coverImage || !article.slug){
                                             return null;
                                         }
                                         return (
@@ -181,7 +270,7 @@ export default function ArticlesPage() {
                                                             {article.title}
                                                         </div>
                                                         <div className="text-sm text-gray-500 line-clamp-1">
-                                                            {article.subtitle}
+                                                            {article.sourceType}
                                                         </div>
                                                     </div>
                                                 </div>

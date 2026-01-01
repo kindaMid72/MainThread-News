@@ -25,8 +25,8 @@ export default function ArticleEditPage() {
         thumbnail_url: '',
         status: 'draft',
         category_id: '',
-        author_id: CURRENT_AUTHOR_ID,
-        source_type: 'original',
+        author_id: 'somhtng',
+        source_type: 'auto',
         // tags will be handled separately if not in ArticleQuery, but assuming array of IDs for submission
     });
 
@@ -142,10 +142,10 @@ export default function ArticleEditPage() {
             <div className="flex items-center justify-between">
                 <div className="space-y-1">
                     <Link href={`/admin/${params.userId}/articles`} className="inline-flex items-center text-sm text-gray-500 hover:text-gray-900 transition-colors mb-2">
-                        <ArrowLeft className="w-4 h-4 mr-1" /> Back to Articles
+                        <ArrowLeft className="w-4 h-4 mr-1" /> Back
                     </Link>
-                    <h1 className="text-3xl font-bold tracking-tight text-gray-900">Create New Article</h1>
-                    <p className="text-gray-500">Draft your content and manage metadata.</p>
+                    <h1 className="text-3xl font-bold tracking-tight text-gray-900">Edit Article</h1>
+                    <p className="text-gray-500">Edit your article and manage metadata.</p>
                 </div>
                 <div className="flex items-center gap-3">
                     <div className={`px-4 py-2 rounded-full text-sm font-medium border ${formData.status === 'published' ? 'bg-green-50 text-green-700 border-green-200' :
@@ -291,7 +291,7 @@ export default function ArticleEditPage() {
                         <div className="space-y-2">
                             <label className="text-xs font-medium text-gray-500 uppercase">Category</label>
                             <select
-                                value={formData.category_id}
+                                value={formData.category_id || 'None'}
                                 onChange={(e) => handleInputChange('category_id', e.target.value)}
                                 className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
                             >
