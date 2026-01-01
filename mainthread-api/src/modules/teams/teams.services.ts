@@ -4,7 +4,7 @@ import generateRandomToken from "../../utils/generator/generateRandomToken";
 import Emailer from "../../config/emailer/emailerInstance";
 
 // utils
-import hashSHA256 from "../../utils/authTools/hashSHA256";
+import hashSHA256 from "../../utils/cryptoTools/hashSHA256";
 import generatePictureUrl from "../../utils/generator/generatePictureUrl";
 import extractIdFromToken from "../../utils/authTools/extracIdFromToken";
 

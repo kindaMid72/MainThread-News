@@ -4,7 +4,7 @@ import express from 'express';
 import articlesMiddlewares from './articles.middlewares';
 
 // services
-import { createArticleService } from './articles.services';
+import { createArticleService, getArticlesService } from './articles.services';
 
 // logs
 import createLog from '../../logging/log.admin.action';
@@ -38,6 +38,49 @@ router.post('/create-new-article', async (req, res) => {
     }catch(error){
         console.error('Error creating article:', error);
         res.status(500).json({ error: 'Failed to create article' });
+    }
+})
+
+router.get('/get-articles-on-given-page', async (req, res) => {
+    try{
+        // req interface
+        interface GetArticlesOnGivenPageRequest {
+            cursor: string | null;
+            limit: number;
+            direction: 'forward' | 'backward';
+            category: string | null;
+            status: string | null;
+            asc: boolean | null;
+        }
+
+        // TODO: implement pagination back and forward with cursor implementation
+        // req: 
+        // - cursor: crypted object or null
+        // - limit: number
+        // - direction: 'forward' or 'backward'
+        // - category: all or specific category
+        // - status: all or specific status
+
+        // response: {articles: ArticleQuery[]}: ArticleQuery, cursor: crypted object, hasPrev: boolean, hasNext: boolean
+
+        // check input
+        const reqParams : GetArticlesOnGivenPageRequest = {
+            cursor: req.query.cursor as string || null,
+            limit: Number(req.query.limit) as number || 5,
+            direction: req.query.direction as 'forward' | 'backward' || null,
+            category: req.query.category as string || null,
+            status: req.query.status as string || null,
+            asc: req.query.asc === 'true' || true,
+        };
+
+        // call service, return [ArticleQuery], cursor(encoded): string
+        const getArticlesServiceResponse = await getArticlesService(reqParams);
+
+        // return response
+        res.status(200).json({ articles: getArticlesServiceResponse.articles, cursor: getArticlesServiceResponse.cursor, hasPrev: getArticlesServiceResponse.hasPrev, hasNext: getArticlesServiceResponse.hasNext });
+    }catch(error){
+        console.error('Error getting articles:', error);
+        res.status(500).json({ error: 'Failed to get articles' });
     }
 })
 

@@ -44,3 +44,74 @@ export async function createArticleReturnId({authorId}: {authorId: string}) : Pr
         throw error;
     }
 }
+
+// pagination cursor
+// - first page
+export async function getArticlesFirstPage({limit, category, status, asc}: {limit: number, category: string, status: string, asc: boolean}): Promise<ArticleQuery[]> {
+    try {
+        const db = await dbAccess();
+        // TODO: implement pagination back and forward with cursor implementation
+
+        const statusCondition = status === 'all' || !status ? '' : `status.eq.${status}`;
+        const categoryCondition = category === 'all' || !category ? '' : `category_id.eq.${category}`;
+
+        // query string
+        let additionalCondition = [];
+
+        let query = db
+            .from('articles')
+            .select()
+            .limit(limit + 1)
+            .order('created_at', { ascending: asc })
+
+        if(statusCondition !== ''){
+            additionalCondition.push(statusCondition);
+        }
+
+        if(categoryCondition !== ''){
+            additionalCondition.push(categoryCondition);
+        }
+
+        if(additionalCondition.length > 0){
+            query = query.or(additionalCondition.join(','));
+        }
+        const {data: articles, error} = await query;
+
+        if (error) {
+            console.error('Error getting articles:', error);
+            throw error;
+        }
+
+        return articles;
+    } catch (error) {
+        console.error('Error getting articles:', error);
+        throw error;
+    }
+}
+
+// - next page
+export async function getArticlesNextPage({cursor, limit, direction, category, status}: {cursor: object, limit: number, direction: 'forward' | 'backward', category: string, status: string}) {
+    try {
+        const db = await dbAccess();
+
+        // TODO: implement pagination back and forward with cursor implementation
+
+        return []
+    } catch (error) {
+        console.error('Error getting articles:', error);
+        throw error;
+    }
+}
+
+// - previous page
+export async function getArticlesPreviousPage({cursor, limit, direction, category, status}: {cursor: string, limit: number, direction: 'forward' | 'backward', category: string, status: string}) {
+    try {
+        const db = await dbAccess();
+        // TODO: implement pagination back and forward with cursor implementation
+
+        return []
+    } catch (error) {
+        console.error('Error getting articles:', error);
+        throw error;
+    }
+}
