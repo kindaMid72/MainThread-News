@@ -90,13 +90,50 @@ export async function getArticlesFirstPage({limit, category, status, asc}: {limi
 }
 
 // - next page
-export async function getArticlesNextPage({cursor, limit, direction, category, status}: {cursor: object, limit: number, direction: 'forward' | 'backward', category: string, status: string}) {
+export async function getArticlesNextPage({cursor, limit, direction, category, status, asc}: {cursor: object, limit: number, direction: 'forward' | 'backward', category: string, status: string, asc: boolean}) {
     try {
         const db = await dbAccess();
 
-        // TODO: implement pagination back and forward with cursor implementation
+        // cursorNext: {id, createdAt}
+        const cursorNext = cursor as {id: string, createdAt: string};
 
-        return []
+        // TODO: implement pagination back and forward with cursor implementation
+        if(direction !== 'forward'){
+            throw new Error('Invalid direction');
+        }
+
+        const statusCondition = status === 'all' || !status ? '' : `status.eq.${status}`;
+        const categoryCondition = category === 'all' || !category ? '' : `category_id.eq.${category}`;
+
+        // query string
+        let additionalCondition = [];
+
+        let query = db
+            .from('articles')
+            .select()
+            .limit(limit + 1)
+            .gte('created_at', cursorNext.createdAt)
+            .order('created_at', { ascending: asc })
+        
+        if(statusCondition !== ''){
+            additionalCondition.push(statusCondition);
+        }
+
+        if(categoryCondition !== ''){
+            additionalCondition.push(categoryCondition);
+        }
+
+        if(additionalCondition.length > 0){
+            query = query.or(additionalCondition.join(','));
+        }
+        const {data: articles, error} = await query;
+
+        if (error) {
+            console.error('Error getting articles:', error);
+            throw error;
+        }
+
+        return articles;
     } catch (error) {
         console.error('Error getting articles:', error);
         throw error;

@@ -34,7 +34,7 @@ export default function ArticlesPage() {
     const [ascFilter, setAscFilter] = useState('');
 
     // ui state
-    const [isLoadingFetch, setIsLoadingFetch] = useState(false);
+    const [isLoadingFetch, setIsLoadingFetch] = useState(true);
     const [isErrorFetch, setIsErrorFetch] = useState(false);
 
     const [isLoadingEdit, setIsLoadingEdit] = useState(false);
@@ -62,20 +62,11 @@ export default function ArticlesPage() {
             published: 'bg-green-100 text-green-800',
             draft: 'bg-gray-100 text-gray-800',
             review: 'bg-yellow-100 text-yellow-800',
+            archived: 'bg-red-100 text-red-800',
         };
         return styles[status] || styles.draft;
     };
 
-    useEffect(() => {
-        // TODO: fetch categories
-        const fetchCategories = async () => {
-            const response = await api.get('/api/admin/categories/get-all-categories');
-            if (response.status === 200 && !cursor) {
-                setCategories(response.data);
-            }
-        };
-        fetchCategories(); 
-    }, []);
 
     // handler
     // create new article
@@ -108,6 +99,24 @@ export default function ArticlesPage() {
         setIsLoadingEdit(false);
     };
 
+    const initialFetch = async () => {
+        try {
+            setIsLoadingFetch(true);
+            await fetchArticles();
+            const fetchCategories = async () => {
+                const response = await api.get('/api/admin/categories/get-all-categories');
+                if (response.status === 200 && !cursor) {
+                    setCategories(response.data);
+                }
+            };
+            fetchCategories(); 
+        } catch (error) {
+            setIsErrorFetch(true);
+        } finally {
+            setIsLoadingFetch(false);
+        }
+    };
+
     // fetch data
     const fetchArticles = async (pageCursor: string | null = null, direction: 'forward' | 'backward' | null = null) => {
         try {
@@ -122,7 +131,6 @@ export default function ArticlesPage() {
                 }
             });
 
-            console.log(response.data);
             if(response.status === 200){
                 setArticles(response.data.articles);
                 setCursor(response.data.cursor);
@@ -175,6 +183,10 @@ export default function ArticlesPage() {
             setIsLoadingTabel(false);
         }
     }, [categoryFilter, statusFilter, ascFilter]);
+
+    useEffect(() => {
+        initialFetch();
+    }, []);
 
     if(isLoadingFetch){
         return <LoadingSkeletonTable />

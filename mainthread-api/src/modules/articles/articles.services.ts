@@ -44,13 +44,13 @@ export async function getArticlesService({ cursor, limit, direction, category, s
             hasNext
         }
         const cursorEncoded: string = encodeObjectToBase64(newCursor);
-        queryResult.shift();
+        queryResult.pop();
         return { articles: queryResult, cursor: cursorEncoded, hasNext, hasPrev };
 
     } else if (direction === 'forward') {
         // next page
         const cursorDecoded: any = decodeBase64ToObject(cursor);
-        const queryResult: ArticleQuery[] = await getArticlesNextPage({ cursor: cursorDecoded, limit: limit as number, direction: direction as 'forward', category: category as string, status: status as string });
+        const queryResult: ArticleQuery[] = await getArticlesNextPage({ cursor: cursorDecoded.nextCursor, limit: limit as number, direction: direction as 'forward', category: category as string, status: status as string, asc: asc as boolean });
 
         // assign hasNext and hasPrev based on queryResult
         const hasNext = queryResult.length === limit;
