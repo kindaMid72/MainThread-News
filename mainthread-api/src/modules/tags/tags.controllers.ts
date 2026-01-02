@@ -41,7 +41,6 @@ router.post('/add-new-tag', async (req, res) => {
             metadata: { name }
         });
         return res.status(200).json({message: 'Tag added successfully'});
-        
     } catch (error) {
         console.log('error from tags controllers: ', error);
         return res.status(500).json({ message: `Internal Server Error: ${error}` });

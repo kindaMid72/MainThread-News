@@ -27,12 +27,13 @@ export async function getAllUser() {
 
     const { data, error }: any = await dbAccess
         .from('users_access')
-        .select('id, name, email, role, avatar_url, is_active');
+        .select('id, user_id, name, email, role, avatar_url, is_active');
 
         
         member = data?.map((item: TeamMemberQuery) => {
         return {
             id: item.id,
+            userId: item.user_id,
             name: item.name,
             email: item.email,
             role: item.role,
