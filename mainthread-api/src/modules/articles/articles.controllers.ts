@@ -51,6 +51,7 @@ router.get('/get-articles-on-given-page', async (req, res) => {
             category: string | null;
             status: string | null;
             asc: boolean | null;
+            search: string;
         }
 
         // TODO: implement pagination back and forward with cursor implementation
@@ -71,6 +72,7 @@ router.get('/get-articles-on-given-page', async (req, res) => {
             category: req.query.category as string || null,
             status: req.query.status as string || null,
             asc: req.query.asc === 'true',
+            search: req.query.search as string || '',
         };
 
         // call service, return [ArticleQuery], cursor(encoded): string

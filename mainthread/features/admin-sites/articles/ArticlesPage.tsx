@@ -20,6 +20,7 @@ import LoadingSkeletonTable from '@/components/LoadingSkeletonTabel';
 
 // types
 import { Categories, CategoriesQuery } from '@/types/Category.type';
+import { UserQuery, User } from '@/types/User.types';
 
 // Sample placeholder data TODO: fetch real data, apply pagination
 
@@ -44,10 +45,11 @@ export default function ArticlesPage() {
 
     // articles data
     const [articles, setArticles] = useState<ArticleQuery[]>([]);
-    const [categories, setCategories] = useState<string[]>([]);
+    const [categories, setCategories] = useState<CategoriesQuery[]>([]);
     const [cursor, setCursor] = useState<string | null>(null);
     const [hasPrev, setHasPrev] = useState(false);
     const [hasNext, setHasNext] = useState(false);
+    const [userData, setUserData] = useState<User[]>([]);
 
     const [popUpMessage, setPopUpMessage] = useState({
         title: '',
@@ -103,6 +105,7 @@ export default function ArticlesPage() {
         try {
             setIsLoadingFetch(true);
             await fetchArticles();
+            // fetch categories
             const fetchCategories = async () => {
                 const response = await api.get('/api/admin/categories/get-all-categories');
                 if (response.status === 200 && !cursor) {
@@ -110,6 +113,15 @@ export default function ArticlesPage() {
                 }
             };
             fetchCategories(); 
+            // fetch user data
+            const fetchUserData = async () => {
+                const response = await api.get('/api/admin/teams/get-all-users');
+                if (response.status === 200 && !cursor) {
+                    setUserData(response.data);
+                    console.log(response.data);
+                }
+            };
+            fetchUserData();
         } catch (error) {
             setIsErrorFetch(true);
         } finally {
@@ -127,7 +139,8 @@ export default function ArticlesPage() {
                     direction: direction,
                     category: categoryFilter || 'all',
                     status: statusFilter || 'all',
-                    asc: ascFilter === 'asc'
+                    asc: ascFilter === 'asc',
+                    search: searchQuery || '',
                 }
             });
 
@@ -182,7 +195,7 @@ export default function ArticlesPage() {
         }finally{
             setIsLoadingTabel(false);
         }
-    }, [categoryFilter, statusFilter, ascFilter]);
+    }, [categoryFilter, statusFilter, ascFilter, searchQuery]);
 
     useEffect(() => {
         initialFetch();
@@ -324,10 +337,10 @@ export default function ArticlesPage() {
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <div className="text-sm text-gray-900">{article.author_id}</div>
+                                                <div className="text-sm text-gray-900">{userData?.filter((user) => user.userId === article.author_id)[0]?.name || 'No Author'}</div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <div className="text-sm text-gray-900">{article.category_id}</div>
+                                                <div className="text-sm text-gray-900">{categories.filter((category) => category.id === article.category_id)[0]?.name || 'No Category'}</div>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="text-sm text-gray-900">{format(new Date(article.published_at as string), 'dd MMM yyyy')}</div>

@@ -18,7 +18,7 @@ export async function createArticleService(authorization: string): Promise<Artic
     return { id: articleId };
 }
 
-export async function getArticlesService({ cursor, limit, direction, category, status, asc }: { cursor: string | null, limit: number | null, direction: 'forward' | 'backward', category: string | null, status: string | null, asc: boolean | null })
+export async function getArticlesService({ cursor, limit, direction, category, status, asc, search }: { cursor: string | null, limit: number | null, direction: 'forward' | 'backward', category: string | null, status: string | null, asc: boolean | null, search?: string })
     : Promise<{ articles: ArticleQuery[], cursor: string, hasPrev: boolean, hasNext: boolean }> {
 
     // given cursor(needs to be decoded), limit, direction, category, status
@@ -26,10 +26,10 @@ export async function getArticlesService({ cursor, limit, direction, category, s
 
     // determine if the request is first page, next page, or previous page
 
-    console.log(cursor, limit, direction, category, status, asc);
+    // console.log(cursor, limit, direction, category, status, asc);
     if (!cursor) {
         // first page
-        let queryResult: ArticleQuery[] = await getArticlesFirstPage({ limit: limit as number, category: category as string, status: status as string, asc: asc as boolean });
+        let queryResult: ArticleQuery[] = await getArticlesFirstPage({ limit: limit as number, category: category as string, status: status as string, asc: asc as boolean, search: search as string });
 
         // assign hasNext and hasPrev based on queryResult
         const hasNext = queryResult.length >= (limit || 0);

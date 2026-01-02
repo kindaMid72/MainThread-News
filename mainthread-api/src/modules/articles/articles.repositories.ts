@@ -47,7 +47,7 @@ export async function createArticleReturnId({authorId}: {authorId: string}) : Pr
 
 // pagination cursor
 // - first page
-export async function getArticlesFirstPage({limit, category, status, asc}: {limit: number, category: string, status: string, asc: boolean}): Promise<ArticleQuery[]> {
+export async function getArticlesFirstPage({limit, category, status, asc, search}: {limit: number, category: string, status: string, asc: boolean, search?: string}): Promise<ArticleQuery[]> {
     try {
         const db = await dbAccess();
         // TODO: implement pagination back and forward with cursor implementation
@@ -72,6 +72,10 @@ export async function getArticlesFirstPage({limit, category, status, asc}: {limi
             additionalCondition.push(categoryCondition);
         }
 
+        if(search != '' && search != null){
+            query = query.or(`title.ilike.%${search}%`);
+        }
+
         if(additionalCondition.length > 0){
             query = query.or(additionalCondition.join(','));
         }
@@ -90,7 +94,7 @@ export async function getArticlesFirstPage({limit, category, status, asc}: {limi
 }
 
 // - next page
-export async function getArticlesNextPage({cursor, limit, direction, category, status, asc}: {cursor: object, limit: number, direction: 'forward' | 'backward', category: string, status: string, asc: boolean}) {
+export async function getArticlesNextPage({cursor, limit, direction, category, status, asc, search}: {cursor: object, limit: number, direction: 'forward' | 'backward', category: string, status: string, asc: boolean, search?: string}) {
     try {
         const db = await dbAccess();
 
@@ -113,6 +117,10 @@ export async function getArticlesNextPage({cursor, limit, direction, category, s
             .select()
             .limit(limit + 1)
             .order('created_at', { ascending: asc })
+
+        if(search != '' && search != null){
+            query = query.or(`title.ilike.%${search}%`);
+        }
 
         // determine operator based on sort direction
         if (asc) {
@@ -149,7 +157,7 @@ export async function getArticlesNextPage({cursor, limit, direction, category, s
 }
 
 // - previous page
-export async function getArticlesPreviousPage({cursor, limit, direction, category, status, asc}: {cursor: object, limit: number, direction: 'forward' | 'backward', category: string, status: string, asc: boolean}) {
+export async function getArticlesPreviousPage({cursor, limit, direction, category, status, asc, search}: {cursor: object, limit: number, direction: 'forward' | 'backward', category: string, status: string, asc: boolean, search?: string}) {
     try {
         const db = await dbAccess();
         const cursorPrev = cursor as {id: string, createdAt: string};
@@ -177,6 +185,10 @@ export async function getArticlesPreviousPage({cursor, limit, direction, categor
         } else {
             // Newest first: prev page means newer items (> cursor)
             query = query.gt('created_at', cursorPrev.createdAt);
+        }
+
+        if(search != '' && search != null){
+            query = query.or(`title.ilike.%${search}%`);
         }
 
         if(statusCondition !== ''){
