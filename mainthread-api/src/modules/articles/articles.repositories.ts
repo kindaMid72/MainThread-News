@@ -2,7 +2,10 @@ import dbAccess from '../../config/database/createDbAccess'
 import redis from '../../config/redis/createRedisAccess'
 
 //types
-import { ArticleQuery, Article } from './articles.types'
+import { ArticleQuery, Article } from './articles.types';
+import { TagQuery, Tag } from '../tags/tags.types';
+
+import {REDIS_KEY} from '../../const/const.redis'
 
 export async function createArticleReturnId({authorId}: {authorId: string}) : Promise<string>{
     try {
@@ -215,6 +218,66 @@ export async function getArticlesPreviousPage({cursor, limit, direction, categor
         return articles;
     } catch (error) {
         console.error('Error getting articles:', error);
+        throw error;
+    }
+}
+
+export async function getArticleById(id: string): Promise<ArticleQuery> {
+    try {
+    
+        // check redis cache
+        const cachedArticle = await redis.get(REDIS_KEY.ARTICLES(id));
+        if (cachedArticle) {
+            return cachedArticle;
+        }
+
+        const db = await dbAccess();
+        const {data: article, error} = await db
+            .from('articles')
+            .select()
+            .eq('id', id)
+            .single();
+
+        if (error) {
+            console.error('Error getting article:', error);
+            throw error;
+        }
+
+        // set cache
+        await redis.set(REDIS_KEY.ARTICLES(id), article);
+
+        return article;
+    } catch (error) {
+        console.error('Error getting article:', error);
+        throw error;
+    }
+}
+
+export async function getArticleTagsById(id: string): Promise<TagQuery[]> {
+    try {
+        // check redis cache
+        const cachedArticleTags = await redis.get(REDIS_KEY.ARTICLES_TAGS(id));
+        if (cachedArticleTags) {
+            return cachedArticleTags as TagQuery[];
+        }
+
+        const db = await dbAccess();
+        const {data: articleTags, error} = await db
+            .from('article_tags')
+            .select('tag_id')
+            .eq('article_id', id);
+
+        if (error) {
+            console.error('Error getting article tags:', error);
+            throw error;
+        }
+
+        // set cache
+        await redis.set(REDIS_KEY.ARTICLES_TAGS(id), articleTags);
+
+        return articleTags as TagQuery[];
+    } catch (error) {
+        console.error('Error getting article tags:', error);
         throw error;
     }
 }

@@ -4,14 +4,18 @@ import express from 'express';
 import articlesMiddlewares from './articles.middlewares';
 
 // services
-import { createArticleService, getArticlesService } from './articles.services';
+import { 
+    createArticleService, 
+    getArticlesService, 
+    getArticleService 
+} from './articles.services';
 
 // logs
 import createLog from '../../logging/log.admin.action';
 
 // utils
 import extractIdFromToken from '../../utils/authTools/extracIdFromToken';
-import { ArticleQuery } from './articles.types';
+import { ArticleQuery, ArticleTag } from './articles.types';
 
 const router = express.Router();
 
@@ -54,7 +58,7 @@ router.get('/get-articles-on-given-page', async (req, res) => {
             search: string;
         }
 
-        // TODO: implement pagination back and forward with cursor implementation
+        // implement pagination back and forward with cursor implementation
         // req: 
         // - cursor: crypted object or null
         // - limit: number
@@ -83,6 +87,31 @@ router.get('/get-articles-on-given-page', async (req, res) => {
     }catch(error){
         console.error('Error getting articles:', error);
         res.status(500).json({ error: 'Failed to get articles' });
+    }
+})
+
+router.get('/get-article-by-id/:id', async (req, res) => {
+    try{
+        // req: 
+        // - id: string
+
+        // response: ArticleQuery
+
+        // check input
+        const id = req.params.id;
+        if(!id){
+            return res.status(400).json({ error: 'Missing article id' });
+        }
+
+        // call service, return ArticleQuery
+        const getArticleServiceResponse: {article: ArticleQuery, articleTags: ArticleTag[] } = await getArticleService(id);
+
+        console.log(getArticleServiceResponse);
+        // return response
+        res.status(200).json(getArticleServiceResponse);
+    }catch(error){
+        console.error('Error getting article:', error);
+        res.status(500).json({ error: 'Failed to get article' });
     }
 })
 

@@ -1,7 +1,14 @@
-import { createArticleReturnId, getArticlesFirstPage, getArticlesNextPage, getArticlesPreviousPage } from "./articles.repositories";
+import { 
+    createArticleReturnId, 
+    getArticlesFirstPage, 
+    getArticlesNextPage, 
+    getArticlesPreviousPage, 
+    getArticleById, 
+    getArticleTagsById 
+} from "./articles.repositories";
 
 // types
-import { ArticleQuery } from "./articles.types";
+import { ArticleQuery, ArticleTag } from "./articles.types";
 
 // utils
 import extractIdFromToken from "../../utils/authTools/extracIdFromToken";
@@ -25,6 +32,8 @@ export async function getArticlesService({ cursor, limit, direction, category, s
     // return articles, {nextCursor, prevCursor, hasPrev, hasNext}(encoded)
 
     // determine if the request is first page, next page, or previous page
+
+    search = search?.trim();
 
     // console.log(cursor, limit, direction, category, status, asc);
     if (!cursor) {
@@ -103,4 +112,16 @@ export async function getArticlesService({ cursor, limit, direction, category, s
         throw new Error('Invalid direction');
     }
 
+}
+
+
+export async function getArticleService(id: string): Promise<{article: ArticleQuery, articleTags: ArticleTag[] }> {
+
+    // get article by id
+    const article = await getArticleById(id);
+
+    // get article & tags relation by id, return related tags id
+    const articleTags = await getArticleTagsById(id);
+    
+    return {article, articleTags};
 }

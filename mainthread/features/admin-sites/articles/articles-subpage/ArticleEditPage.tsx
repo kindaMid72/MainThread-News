@@ -1,18 +1,20 @@
 "use client";
 
-import api from '@/libs/axiosInterceptor/axiosAdminInterceptor';
 import { ArticleQuery } from '@/types/Article.type';
 import { CategoriesQuery } from '@/types/Category.type';
 import { TagQuery } from '@/types/Tag.type';
-import { AlertCircle, ArrowLeft, CheckCircle, Image as ImageIcon, Loader2, Save } from 'lucide-react';
+import { AlertCircle, ArrowLeft, CheckCircle, Image as ImageIcon, Loader2, Save, Star, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import EditorTextBox from '../components/EditorTextBox';
 
 import { useParams } from 'next/navigation';
+import EditArticleSkeletonLoading from '../components/EditArticleSkeletonLoading';
 
 // Mock current author for now - in real app, get from auth context
-const CURRENT_AUTHOR_ID = "123e4567-e89b-12d3-a456-426614174000";
+
+// api
+import api from '@/libs/axiosInterceptor/axiosAdminInterceptor';
 
 export default function ArticleEditPage() {
     const params = useParams();
@@ -25,8 +27,10 @@ export default function ArticleEditPage() {
         thumbnail_url: '',
         status: 'draft',
         category_id: '',
-        author_id: 'somhtng',
+        author_id: '',
         source_type: 'auto',
+        is_headline: false,
+        is_breaking: false,
         // tags will be handled separately if not in ArticleQuery, but assuming array of IDs for submission
     });
 
@@ -38,19 +42,31 @@ export default function ArticleEditPage() {
     const [tags, setTags] = useState<TagQuery[]>([]);
 
     // UI States
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoadingFetch, setIsLoadingFetch] = useState(true);
+    const [isLoadingSave, setIsLoadingSave] = useState(false);
+
     const [isSaving, setIsSaving] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
     // Fetch initial data
     useEffect(() => {
         const fetchData = async () => {
-            setIsLoading(true);
+            setIsLoadingFetch(true);
             try {
 
-                // TODO: fetch article by id
+                const articleRes = await api.get(`/api/admin/articles/get-article-by-id/${params.editArticleId}`);
+                const articleData = articleRes.data;
+                console.log(articleData);
                 
+                // set article data
+                setFormData(articleData);
                 
+                // set active tags
+                if(articleData.tags && articleData.tags.length > 0){
+                    const tagIds = articleData.tags.map((tag: TagQuery) => tag.id);
+                    setSelectedTagIds(tagIds);
+                }
+
                 // fetch tags & categories
                 const [categoriesRes, tagsRes] = await Promise.all([
                     api.get('/api/admin/categories/get-all-categories'),
@@ -65,7 +81,10 @@ export default function ArticleEditPage() {
                 console.error("Failed to fetch initial data", error);
                 setMessage({ type: 'error', text: 'Failed to load categories or tags' });
             } finally {
-                setIsLoading(false);
+                setTimeout(() => {
+                    setIsLoadingFetch(false);
+
+                }, 3000);
             }
         };
 
@@ -128,11 +147,9 @@ export default function ArticleEditPage() {
         }
     };
 
-    if (isLoading) {
+    if (isLoadingFetch) {
         return (
-            <div className="flex h-96 items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-            </div>
+            <EditArticleSkeletonLoading />
         );
     }
 
@@ -149,9 +166,9 @@ export default function ArticleEditPage() {
                 </div>
                 <div className="flex items-center gap-3">
                     <div className={`px-4 py-2 rounded-full text-sm font-medium border ${formData.status === 'published' ? 'bg-green-50 text-green-700 border-green-200' :
-                            formData.status === 'review' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
-                                formData.status === 'archived' ? 'bg-gray-100 text-gray-700 border-gray-200' :
-                                    'bg-blue-50 text-blue-700 border-blue-200'
+                        formData.status === 'review' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
+                            formData.status === 'archived' ? 'bg-gray-100 text-gray-700 border-gray-200' :
+                                'bg-blue-50 text-blue-700 border-blue-200'
                         }`}>
                         {formData.status?.toUpperCase()}
                     </div>
@@ -255,6 +272,56 @@ export default function ArticleEditPage() {
                         </div>
                     </div>
 
+                    {/* Feature Status */}
+                    <div className="p-5 bg-white border border-gray-200 rounded-xl shadow-sm space-y-4">
+                        <h3 className="font-semibold text-gray-900">Article Status</h3>
+                        <div className="space-y-3">
+                            {/* Headline Toggle */}
+                            <label className="flex items-center justify-between p-3 border border-gray-100 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                                <div className="flex items-center gap-3">
+                                    <div className={`p-2 rounded-lg ${formData.is_headline ? 'bg-yellow-100 text-yellow-600' : 'bg-gray-100 text-gray-400'}`}>
+                                        <Star className="w-4 h-4" />
+                                    </div>
+                                    <div>
+                                        <div className="text-sm font-medium text-gray-900">Headline</div>
+                                        <div className="text-xs text-gray-500">Feature on homepage</div>
+                                    </div>
+                                </div>
+                                <div className="relative inline-flex items-center cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.is_headline || false}
+                                        onChange={(e) => handleInputChange('is_headline', e.target.checked)}
+                                        className="sr-only peer"
+                                    />
+                                    <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                                </div>
+                            </label>
+
+                            {/* Breaking News Toggle */}
+                            <label className="flex items-center justify-between p-3 border border-gray-100 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                                <div className="flex items-center gap-3">
+                                    <div className={`p-2 rounded-lg ${formData.is_breaking ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-400'}`}>
+                                        <Zap className="w-4 h-4" />
+                                    </div>
+                                    <div>
+                                        <div className="text-sm font-medium text-gray-900">Breaking News</div>
+                                        <div className="text-xs text-gray-500">Highlight as urgent</div>
+                                    </div>
+                                </div>
+                                <div className="relative inline-flex items-center cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.is_breaking || false}
+                                        onChange={(e) => handleInputChange('is_breaking', e.target.checked)}
+                                        className="sr-only peer"
+                                    />
+                                    <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-red-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-600"></div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
                     {/* Thumbnail */}
                     <div className="p-5 bg-white border border-gray-200 rounded-xl shadow-sm space-y-4">
                         <h3 className="font-semibold text-gray-900">Thumbnail</h3>
@@ -311,8 +378,8 @@ export default function ArticleEditPage() {
                                         key={tag?.id}
                                         onClick={() => handleTagToggle(tag.id as string)}
                                         className={`px-3 py-1 text-xs rounded-full border transition-all ${selectedTagIds.includes(tag.id as string)
-                                                ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                                                : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+                                            ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                                            : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
                                             }`}
                                     >
                                         {tag.name}
