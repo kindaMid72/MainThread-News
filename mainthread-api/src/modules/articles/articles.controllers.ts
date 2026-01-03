@@ -4,10 +4,11 @@ import express from 'express';
 import articlesMiddlewares from './articles.middlewares';
 
 // services
-import { 
-    createArticleService, 
-    getArticlesService, 
-    getArticleService 
+import {
+    createArticleService,
+    getArticleService,
+    getArticlesService,
+    updateArticleService
 } from './articles.services';
 
 // logs
@@ -106,12 +107,33 @@ router.get('/get-article-by-id/:id', async (req, res) => {
         // call service, return ArticleQuery
         const getArticleServiceResponse: {article: ArticleQuery, articleTags: ArticleTag[] } = await getArticleService(id);
 
-        console.log(getArticleServiceResponse);
         // return response
         res.status(200).json(getArticleServiceResponse);
     }catch(error){
         console.error('Error getting article:', error);
         res.status(500).json({ error: 'Failed to get article' });
+    }
+})
+
+router.put('/update-article-by-id/:id', async (req, res) => {
+    try {
+        // req:
+        // - id: string
+        // - updates: Partial<ArticleQuery>
+        // - tag_ids?: string[]
+
+        const { id, tag_ids, ...updates } = req.body;
+
+        if (!id) {
+            return res.status(400).json({ error: 'Missing article id' });
+        }
+
+        await updateArticleService(id, updates, tag_ids);
+
+        res.status(200).json({ message: 'Article updated successfully' });
+    } catch (error) {
+        console.error('Error updating article:', error);
+        res.status(500).json({ error: 'Failed to update article' });
     }
 })
 

@@ -1,10 +1,12 @@
-import { 
-    createArticleReturnId, 
-    getArticlesFirstPage, 
-    getArticlesNextPage, 
-    getArticlesPreviousPage, 
-    getArticleById, 
-    getArticleTagsById 
+import {
+    createArticleReturnId,
+    getArticleById,
+    getArticleTagsById,
+    getArticlesFirstPage,
+    getArticlesNextPage,
+    getArticlesPreviousPage,
+    updateArticle,
+    updateArticleTags
 } from "./articles.repositories";
 
 // types
@@ -122,6 +124,19 @@ export async function getArticleService(id: string): Promise<{article: ArticleQu
 
     // get article & tags relation by id, return related tags id
     const articleTags = await getArticleTagsById(id);
-    
-    return {article, articleTags};
+
+    return { article, articleTags };
+}
+
+export async function updateArticleService(id: string, updates: Partial<ArticleQuery>, tagIds?: string[]): Promise<void> {
+
+    // update article
+    if(Object.keys(updates).length > 0){
+        await updateArticle(id, updates);
+    }
+
+    // update tags if provided, perform update on article_tags table
+    if(tagIds){
+        await updateArticleTags(id, tagIds);
+    }
 }

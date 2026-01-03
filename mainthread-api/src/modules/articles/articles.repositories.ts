@@ -224,7 +224,7 @@ export async function getArticlesPreviousPage({cursor, limit, direction, categor
 
 export async function getArticleById(id: string): Promise<ArticleQuery> {
     try {
-    
+
         // check redis cache
         const cachedArticle = await redis.get(REDIS_KEY.ARTICLES(id));
         if (cachedArticle) {
@@ -278,6 +278,75 @@ export async function getArticleTagsById(id: string): Promise<TagQuery[]> {
         return articleTags as TagQuery[];
     } catch (error) {
         console.error('Error getting article tags:', error);
+        throw error;
+    }
+}
+
+export async function updateArticle(id: string, updates: Partial<ArticleQuery>): Promise<void> {
+    try {
+        const db = await dbAccess();
+        const { error } = await db
+            .from('articles')
+            .update({
+                ...updates,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', id);
+
+        if (error) {
+            console.error('Error updating article:', error);
+            throw error;
+        }
+
+        // Invalidate cache
+        await redis.del(REDIS_KEY.ARTICLES(id));
+    } catch (error) {
+        console.error('Error updating article:', error);
+        throw error;
+    }
+}
+
+export async function updateArticleTags(articleId: string, tagIds: string[]): Promise<void> {
+    try {
+        const db = await dbAccess();
+
+        // 1. Delete existing tags for this article
+        const { error: deleteError } = await db
+            .from('article_tags')
+            .delete()
+            .eq('article_id', articleId);
+
+        if (deleteError) {
+            console.error('Error deleting old article tags:', deleteError);
+            throw deleteError;
+        }
+
+        // 2. Insert new tags
+        if (tagIds.length > 0) {
+            const newTags = tagIds.map(tagId => ({
+                article_id: articleId,
+                tag_id: tagId
+            }));
+
+            const { error: insertError } = await db
+                .from('article_tags')
+                .insert([
+                    ...newTags.map(tags=> ({
+                        article_id: articleId,
+                        tag_id: tags.tag_id
+                    }))
+                ])
+
+            if (insertError) {
+                console.error('Error inserting new article tags:', insertError);
+                throw insertError;
+            }
+        }
+
+        // Invalidate cache
+        await redis.del(REDIS_KEY.ARTICLES_TAGS(articleId));
+    } catch (error) {
+        console.error('Error updating article tags:', error);
         throw error;
     }
 }

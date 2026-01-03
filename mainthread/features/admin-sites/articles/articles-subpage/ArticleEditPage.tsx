@@ -1,6 +1,6 @@
 "use client";
 
-import { ArticleQuery } from '@/types/Article.type';
+import { ArticleQuery, ArticleTag } from '@/types/Article.type';
 import { CategoriesQuery } from '@/types/Category.type';
 import { TagQuery } from '@/types/Tag.type';
 import { AlertCircle, ArrowLeft, CheckCircle, Image as ImageIcon, Loader2, Save, Star, Zap } from 'lucide-react';
@@ -8,7 +8,9 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import EditorTextBox from '../components/EditorTextBox';
 
-import { useParams } from 'next/navigation';
+import { useDebounce } from '@/hooks/useDebounce';
+import { Check, CloudUpload } from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
 import EditArticleSkeletonLoading from '../components/EditArticleSkeletonLoading';
 
 // Mock current author for now - in real app, get from auth context
@@ -17,20 +19,28 @@ import EditArticleSkeletonLoading from '../components/EditArticleSkeletonLoading
 import api from '@/libs/axiosInterceptor/axiosAdminInterceptor';
 
 export default function ArticleEditPage() {
+    const router = useRouter();
     const params = useParams();
 
     // Form State
     const [formData, setFormData] = useState<Partial<ArticleQuery>>({
+        id: '',
         title: '',
         slug: '',
+        excerpt: '',
         content_html: '',
         thumbnail_url: '',
-        status: 'draft',
         category_id: '',
         author_id: '',
+        status: 'draft',
         source_type: 'auto',
-        is_headline: false,
+        source_ref: '',
+        view_count: 0,
         is_breaking: false,
+        is_headline: false,
+        published_at: '',
+        updated_at: '',
+        created_at: '',
         // tags will be handled separately if not in ArticleQuery, but assuming array of IDs for submission
     });
 
@@ -44,6 +54,12 @@ export default function ArticleEditPage() {
     // UI States
     const [isLoadingFetch, setIsLoadingFetch] = useState(true);
     const [isLoadingSave, setIsLoadingSave] = useState(false);
+    const [isAutoSaving, setIsAutoSaving] = useState(false);
+    const [isAutoSaveEnabled, setIsAutoSaveEnabled] = useState(true);
+    const [isDirty, setIsDirty] = useState(false);
+    const [lastSavedContent, setLastSavedContent] = useState('');
+
+    const debouncedContent = useDebounce(formData.content_html, 2000); // Auto-save delay 2s
 
     const [isSaving, setIsSaving] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
@@ -56,21 +72,23 @@ export default function ArticleEditPage() {
 
                 const articleRes = await api.get(`/api/admin/articles/get-article-by-id/${params.editArticleId}`);
                 const articleData = articleRes.data;
-                console.log(articleData);
-                
+                // console.log(articleData);
+
                 // set article data
-                setFormData(articleData);
-                
+                setFormData(articleData.article);
+                setLastSavedContent(articleData.article.content_html || '');
+
                 // set active tags
-                if(articleData.tags && articleData.tags.length > 0){
-                    const tagIds = articleData.tags.map((tag: TagQuery) => tag.id);
+                if (articleData.articleTags && articleData.articleTags.length > 0) {
+                    const tagIds = articleData.articleTags.map((tag: ArticleTag) => tag.tag_id);
                     setSelectedTagIds(tagIds);
+                    console.log(tagIds);
                 }
 
                 // fetch tags & categories
                 const [categoriesRes, tagsRes] = await Promise.all([
-                    api.get('/api/admin/categories/get-all-categories'),
-                    api.get('/api/admin/tags/get-all-tags')
+                    await api.get('/api/admin/categories/get-all-categories'),
+                    await api.get('/api/admin/tags/get-all-tags')
                 ]);
 
                 // Filter only active categories/tags if needed, or backend does it
@@ -91,9 +109,57 @@ export default function ArticleEditPage() {
         fetchData();
     }, []);
 
+    // Auto Save Logic
+    useEffect(() => {
+        const autoSave = async () => {
+            if (!isAutoSaveEnabled || !formData.id || !formData.content_html) return;
+
+            // Only save if content has changed and is different from last saved
+            if (formData.content_html !== lastSavedContent && debouncedContent === formData.content_html) {
+                setIsAutoSaving(true);
+                try {
+                    await api.put(`/api/admin/articles/update-article-by-id/${formData.id}`, {
+                        content_html: formData.content_html
+                    });
+                    setLastSavedContent(formData.content_html);
+                    // Don't reset isDirty here fully because other fields might be dirty, 
+                    // but for content specific check we are good. 
+                    // However, we simply keep isDirty true until manual save for full consistency check if user leaves?
+                    // The prompt implies "auto save only applies to content_html", so if user leaves, 
+                    // other fields might be lost. So we keep isDirty if other fields changed?
+                    // For simplicity, let's keep isDirty = true until FULL SAVE, 
+                    // or maybe we consider content "saved".
+                    // Let's rely on manual save to clear the global "isDirty" flag for safety.
+                } catch (error) {
+                    console.error("Auto-save failed", error);
+                } finally {
+                    setIsAutoSaving(false);
+                }
+            }
+        };
+
+        if (isAutoSaveEnabled) {
+            autoSave();
+        }
+    }, [debouncedContent, isAutoSaveEnabled]);
+
+    // Unsaved Changes Warning
+    useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            if (isDirty) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [isDirty]);
+
     // Handlers
     const handleInputChange = (field: keyof ArticleQuery, value: any) => {
         setFormData(prev => ({ ...prev, [field]: value }));
+        setIsDirty(true);
         // Auto-generate slug from title if slug is empty
         if (field === 'title' && !formData.slug) {
             const slug = value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
@@ -125,11 +191,13 @@ export default function ArticleEditPage() {
 
             console.log("Submitting Payload:", payload);
 
-            // TODO: Replace with actual endpoint once confirmed
-            const response = await api.post('/api/admin/articles/create', payload); // Placeholder endpoint
+            // TODO: check if this one working
+            const response = await api.put(`/api/admin/articles/update-article-by-id/${formData.id}`, payload);
 
             if (response.status === 200 || response.status === 201) {
                 setMessage({ type: 'success', text: 'Article saved successfully!' });
+                setIsDirty(false);
+                setLastSavedContent(formData.content_html || '');
             } else {
                 throw new Error(response.data?.message || 'Failed to save');
             }
@@ -224,7 +292,35 @@ export default function ArticleEditPage() {
 
                     {/* Editor */}
                     <div className="space-y-2">
-                        <label className="block text-sm font-semibold text-gray-700">Content</label>
+                        <div className="flex items-center justify-between">
+                            <label className="block text-sm font-semibold text-gray-700">Content</label>
+                            <div className="flex items-center gap-3">
+                                {isAutoSaving && (
+                                    <span className="text-xs text-blue-600 flex items-center animate-pulse">
+                                        <CloudUpload className="w-3 h-3 mr-1" />
+                                        Saving...
+                                    </span>
+                                )}
+                                {!isAutoSaving && formData.content_html === lastSavedContent && lastSavedContent !== '' && (
+                                    <span className="text-xs text-green-600 flex items-center">
+                                        <Check className="w-3 h-3 mr-1" />
+                                        Saved
+                                    </span>
+                                )}
+                                <label className="flex items-center cursor-pointer gap-2">
+                                    <div className="relative inline-flex items-center">
+                                        <input
+                                            type="checkbox"
+                                            checked={isAutoSaveEnabled}
+                                            onChange={(e) => setIsAutoSaveEnabled(e.target.checked)}
+                                            className="sr-only"
+                                        />
+                                        <div className="w-7 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-green-600"></div>
+                                    </div>
+                                    <span className="text-xs text-gray-500 font-medium">Auto-save</span>
+                                </label>
+                            </div>
+                        </div>
                         <div className="border border-gray-200 rounded-xl overflow-auto h-fit shadow-sm">
                             <EditorTextBox
                                 value={formData.content_html}

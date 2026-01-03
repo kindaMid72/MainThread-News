@@ -49,3 +49,10 @@ export interface ArticleTableViews{
   coverImage?: string;
   slug?: string;
 }
+
+
+export interface ArticleTag{
+    id?: string;
+    article_id?: string;
+    tag_id?: string;
+}
