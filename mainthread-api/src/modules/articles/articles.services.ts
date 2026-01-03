@@ -1,12 +1,14 @@
 import {
     createArticleReturnId,
+    deleteArticle,
     getArticleById,
     getArticleTagsById,
     getArticlesFirstPage,
     getArticlesNextPage,
     getArticlesPreviousPage,
     updateArticle,
-    updateArticleTags
+    updateArticleTags,
+    uploadImage
 } from "./articles.repositories";
 
 // types
@@ -131,12 +133,20 @@ export async function getArticleService(id: string): Promise<{article: ArticleQu
 export async function updateArticleService(id: string, updates: Partial<ArticleQuery>, tagIds?: string[]): Promise<void> {
 
     // update article
-    if(Object.keys(updates).length > 0){
+    if(Object.keys(updates).length > 0){ // check if there any field to update, well there should be some
         await updateArticle(id, updates);
     }
 
     // update tags if provided, perform update on article_tags table
-    if(tagIds){
+    if(tagIds){ // check if there any tag to update
         await updateArticleTags(id, tagIds);
     }
+}
+
+export async function deleteArticleService(id: string): Promise<void> {
+    await deleteArticle(id);
+}
+
+export async function uploadImageService(image: File): Promise<string> {
+    return await uploadImage(image);
 }

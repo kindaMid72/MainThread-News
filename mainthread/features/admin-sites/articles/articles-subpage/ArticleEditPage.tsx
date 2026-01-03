@@ -3,11 +3,11 @@
 import { ArticleQuery, ArticleTag } from '@/types/Article.type';
 import { CategoriesQuery } from '@/types/Category.type';
 import { TagQuery } from '@/types/Tag.type';
-import { AlertCircle, ArrowLeft, CheckCircle, Image as ImageIcon, Loader2, Save, Star, Zap } from 'lucide-react';
-import Link from 'next/link';
+import { AlertCircle, ArrowLeft, CheckCircle, Image as ImageIcon, Loader2, Save, Star, Trash, Zap } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import EditorTextBox from '../components/EditorTextBox';
 
+import ConfirmationMessage from '@/components/ConfirmationMessage';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Check, CloudUpload } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
@@ -43,9 +43,30 @@ export default function ArticleEditPage() {
         created_at: '',
         // tags will be handled separately if not in ArticleQuery, but assuming array of IDs for submission
     });
+    const [initialData, setInitialData] = useState({
+        id: '',
+        title: '',
+        slug: '',
+        excerpt: '',
+        content_html: '',
+        thumbnail_url: '',
+        category_id: '',
+        author_id: '',
+        status: 'draft',
+        source_type: 'auto',
+        source_ref: '',
+        view_count: 0,
+        is_breaking: false,
+        is_headline: false,
+        published_at: '',
+        updated_at: '',
+        created_at: '',
+        tag_ids: []
+    });
 
     // Tags selection state (since ArticleQuery might not have it directly mapped yet for submission)
     const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+    const [initialTagIds, setInitialTagIds] = useState<string[]>([]);
 
     // Data for selectors
     const [categories, setCategories] = useState<CategoriesQuery[]>([]);
@@ -64,6 +85,10 @@ export default function ArticleEditPage() {
     const [isSaving, setIsSaving] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
+    // confirm message
+    const [isConfirmMessageOpen, setIsConfirmMessageOpen] = useState(false);
+    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+
     // Fetch initial data
     useEffect(() => {
         const fetchData = async () => {
@@ -79,16 +104,19 @@ export default function ArticleEditPage() {
                 setLastSavedContent(articleData.article.content_html || '');
 
                 // set active tags
+                let tagIds: string[] = [];
                 if (articleData.articleTags && articleData.articleTags.length > 0) {
-                    const tagIds = articleData.articleTags.map((tag: ArticleTag) => tag.tag_id);
+                    tagIds = articleData.articleTags.map((tag: ArticleTag) => tag.tag_id);
+                    //console.log(articleData.articleTags);
                     setSelectedTagIds(tagIds);
-                    console.log(tagIds);
+                    setInitialTagIds(tagIds); // for tracking changes
                 }
+                setInitialData({...articleData.article, tag_ids: tagIds});
 
                 // fetch tags & categories
                 const [categoriesRes, tagsRes] = await Promise.all([
-                    await api.get('/api/admin/categories/get-all-categories'),
-                    await api.get('/api/admin/tags/get-all-tags')
+                    api.get('/api/admin/categories/get-all-categories'),
+                    api.get('/api/admin/tags/get-all-tags')
                 ]);
 
                 // Filter only active categories/tags if needed, or backend does it
@@ -115,21 +143,13 @@ export default function ArticleEditPage() {
             if (!isAutoSaveEnabled || !formData.id || !formData.content_html) return;
 
             // Only save if content has changed and is different from last saved
-            if (formData.content_html !== lastSavedContent && debouncedContent === formData.content_html) {
+            if (formData.content_html !== lastSavedContent && debouncedContent === formData.content_html) { // check weather the debounced content is sync with the form data(main content), if its sync & different from last saved, then save, its indicated that user stop typing and content had changed
                 setIsAutoSaving(true);
                 try {
                     await api.put(`/api/admin/articles/update-article-by-id/${formData.id}`, {
                         content_html: formData.content_html
                     });
-                    setLastSavedContent(formData.content_html);
-                    // Don't reset isDirty here fully because other fields might be dirty, 
-                    // but for content specific check we are good. 
-                    // However, we simply keep isDirty true until manual save for full consistency check if user leaves?
-                    // The prompt implies "auto save only applies to content_html", so if user leaves, 
-                    // other fields might be lost. So we keep isDirty if other fields changed?
-                    // For simplicity, let's keep isDirty = true until FULL SAVE, 
-                    // or maybe we consider content "saved".
-                    // Let's rely on manual save to clear the global "isDirty" flag for safety.
+                    setLastSavedContent(formData.content_html); // dont change isDirty until full save initialized, or user refused to save content before leaving
                 } catch (error) {
                     console.error("Auto-save failed", error);
                 } finally {
@@ -156,8 +176,20 @@ export default function ArticleEditPage() {
         return () => window.removeEventListener('beforeunload', handleBeforeUnload);
     }, [isDirty]);
 
-    // Handlers
+    const handleBack = () => {
+        if (isDirty) {
+            setIsConfirmMessageOpen(true);
+        } else {
+            router.back();
+        }
+    };
+
+    // property handlers
     const handleInputChange = (field: keyof ArticleQuery, value: any) => {
+        if(field === 'slug'){
+            setFormData(prev => ({ ...prev, [field]: value.toLowerCase().replace(/[^a-zA-Z0-9\-_.~]/g, '-').replace(/-{2,}/g, '-') }));
+            return;
+        }
         setFormData(prev => ({ ...prev, [field]: value }));
         setIsDirty(true);
         // Auto-generate slug from title if slug is empty
@@ -168,6 +200,7 @@ export default function ArticleEditPage() {
     };
 
     const handleTagToggle = (tagId: string) => {
+        setIsDirty(true);
         setSelectedTagIds(prev =>
             prev.includes(tagId)
                 ? prev.filter(id => id !== tagId)
@@ -175,6 +208,7 @@ export default function ArticleEditPage() {
         );
     };
 
+    // form save handlers
     const handleSubmit = async () => {
         setMessage(null);
         if (!formData.title || !formData.content_html || !formData.category_id) {
@@ -189,9 +223,6 @@ export default function ArticleEditPage() {
                 tag_ids: selectedTagIds
             };
 
-            console.log("Submitting Payload:", payload);
-
-            // TODO: check if this one working
             const response = await api.put(`/api/admin/articles/update-article-by-id/${formData.id}`, payload);
 
             if (response.status === 200 || response.status === 201) {
@@ -204,7 +235,6 @@ export default function ArticleEditPage() {
 
         } catch (error: any) {
             console.error("Save error:", error);
-            // Fallback for demo since endpoint probably doesn't exist yet
             if (error.response?.status === 404) {
                 setMessage({ type: 'success', text: 'Article payload valid (Mock Success - Endpoint not ready)' });
             } else {
@@ -214,6 +244,29 @@ export default function ArticleEditPage() {
             setIsSaving(false);
         }
     };
+    const handleDelete = async () => {
+        setMessage(null);
+        setIsSaving(true);
+        try {
+            const response = await api.delete(`/api/admin/articles/delete-article-by-id/${formData.id}`);
+            if (response.status === 200 || response.status === 201) {
+                setMessage({ type: 'success', text: 'Article deleted successfully!' });
+                router.back(); // go back to articles page, view update will be triggered
+            } else {
+                throw new Error(response.data?.message || 'Failed to delete');
+            }
+        } catch (error: any) {
+            console.error("Delete error:", error);
+            if (error.response?.status === 404) {
+                setMessage({ type: 'success', text: 'Article payload valid (Mock Success - Endpoint not ready)' });
+            } else {
+                setMessage({ type: 'error', text: error.message || 'Failed to delete article' });
+            }
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
 
     if (isLoadingFetch) {
         return (
@@ -223,12 +276,38 @@ export default function ArticleEditPage() {
 
     return (
         <div className="max-w-5xl mx-auto p-6 space-y-8 pb-20">
+            {/* Warning message for saves */}
+            {isConfirmMessageOpen && (
+                <ConfirmationMessage
+                    title="Save Changes?"
+                    message="Save changes before leaving?"
+                    onConfirm={() => {setIsConfirmMessageOpen(false); handleSubmit();}}
+                    onCancel={() => {setIsConfirmMessageOpen(false); setIsDirty(false);}}
+                    delayCancel={false}
+                    delayConfirm={false}
+                    confirmColor='green'
+                />
+            )}
+
+            {/* Warning message for delete */}
+            {isDeleteConfirmOpen && (
+                <ConfirmationMessage
+                    title="Delete Article?"
+                    message="Are you sure you want to delete this article? This action cannot be undone."
+                    onConfirm={handleDelete}
+                    onCancel={() => setIsDeleteConfirmOpen(false)}
+                    delayCancel={false}
+                    delayConfirm={true}
+                    confirmColor='red'
+                />
+            )}
+
             {/* Header */}
             <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                    <Link href={`/admin/${params.userId}/articles`} className="inline-flex items-center text-sm text-gray-500 hover:text-gray-900 transition-colors mb-2">
+                <div className="space-y-1 cursor-pointer">
+                    <div onClick={() => handleBack()} className="inline-flex items-center text-sm text-gray-500 hover:text-gray-900 transition-colors mb-2">
                         <ArrowLeft className="w-4 h-4 mr-1" /> Back
-                    </Link>
+                    </div>
                     <h1 className="text-3xl font-bold tracking-tight text-gray-900">Edit Article</h1>
                     <p className="text-gray-500">Edit your article and manage metadata.</p>
                 </div>
@@ -313,7 +392,7 @@ export default function ArticleEditPage() {
                                             type="checkbox"
                                             checked={isAutoSaveEnabled}
                                             onChange={(e) => setIsAutoSaveEnabled(e.target.checked)}
-                                            className="sr-only"
+                                            className="sr-only peer"
                                         />
                                         <div className="w-7 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-green-600"></div>
                                     </div>
@@ -486,7 +565,23 @@ export default function ArticleEditPage() {
                         </div>
                     </div>
                 </div>
+
+                {/* Danger Zone */}
+                <div className="p-5 bg-white border border-red-200 rounded-xl shadow-sm space-y-4">
+                    <h3 className="font-semibold text-red-900">Danger Zone</h3>
+                    <p className="text-sm text-gray-500">
+                        Deleting this article is irreversible. Please be certain.
+                    </p>
+                    <button
+                        onClick={() => setIsDeleteConfirmOpen(true)}
+                        className="w-full flex items-center cursor-pointer justify-center px-4 py-2 bg-red-50 text-red-600 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors border border-red-200"
+                    >
+                        <Trash className="w-4 h-4 mr-2" />
+                        Delete Article
+                    </button>
+                </div>
             </div>
         </div>
+
     );
 }

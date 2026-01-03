@@ -385,6 +385,8 @@ export const handleImageUpload = async (
     onProgress?.({ progress })
   }
 
+  // TODO: perform data upload and return url from server for views
+
   return "/images/tiptap-ui-placeholder-image.jpg"
 }
 

@@ -6,9 +6,11 @@ import articlesMiddlewares from './articles.middlewares';
 // services
 import {
     createArticleService,
+    deleteArticleService,
     getArticleService,
     getArticlesService,
-    updateArticleService
+    updateArticleService,
+    uploadImageService
 } from './articles.services';
 
 // logs
@@ -128,7 +130,19 @@ router.put('/update-article-by-id/:id', async (req, res) => {
             return res.status(400).json({ error: 'Missing article id' });
         }
 
+        // create log
         await updateArticleService(id, updates, tag_ids);
+        
+        createLog({
+            adminId: await extractIdFromToken(req.headers.authorization as string) as string,
+            action: 'update article',
+            entityId: id as string,
+            entityType: 'article',
+            metadata: {
+                articleId: id as string
+            }
+        });
+
 
         res.status(200).json({ message: 'Article updated successfully' });
     } catch (error) {
@@ -137,7 +151,51 @@ router.put('/update-article-by-id/:id', async (req, res) => {
     }
 })
 
+router.delete('/delete-article-by-id/:id', async (req, res) => {
+    try {
+        const id = req.params.id;
+        if (!id) {
+            return res.status(400).json({ error: 'Missing article id' });
+        }
 
+        await deleteArticleService(id);
+
+        // create log
+        createLog({
+            adminId: await extractIdFromToken(req.headers.authorization as string) as string,
+            action: 'delete article',
+            entityId: id as string,
+            entityType: 'article',
+            metadata: {
+                articleId: id as string
+            }
+        });
+
+        res.status(200).json({ message: 'Article deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting article:', error);
+        res.status(500).json({ error: 'Failed to delete article' });
+    }
+})
+
+router.post('/upload-image', async (req, res) => {
+    try {
+
+        // TODO: config image and its metadata
+        const image = req.body.file;
+        
+        if (!image) {
+            return res.status(400).json({ error: 'Missing image,buffer' });
+        }
+
+        const imageUrl = await uploadImageService(image);
+
+        res.status(200).json({ imageUrl });
+    } catch (error) {
+        console.error('Error uploading image:', error);
+        res.status(500).json({ error: 'Failed to upload image' });
+    }
+})
 
 
 export default router;

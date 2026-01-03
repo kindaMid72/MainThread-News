@@ -311,7 +311,7 @@ export async function updateArticleTags(articleId: string, tagIds: string[]): Pr
         const db = await dbAccess();
 
         // 1. Delete existing tags for this article
-        const { error: deleteError } = await db
+        const {error: deleteError} = await db
             .from('article_tags')
             .delete()
             .eq('article_id', articleId);
@@ -321,7 +321,7 @@ export async function updateArticleTags(articleId: string, tagIds: string[]): Pr
             throw deleteError;
         }
 
-        // 2. Insert new tags
+        // 2. Insert new tags, if there are any to add, if its empty, do nothing
         if (tagIds.length > 0) {
             const newTags = tagIds.map(tagId => ({
                 article_id: articleId,
@@ -349,4 +349,46 @@ export async function updateArticleTags(articleId: string, tagIds: string[]): Pr
         console.error('Error updating article tags:', error);
         throw error;
     }
+}
+
+export async function deleteArticle(id: string): Promise<void> {
+    try {
+        const db = await dbAccess();
+
+        // 1. Delete article tags (foreign key might handle this with CASCADE, but manual is safer/explicit)
+        const { error: tagsError } = await db
+            .from('article_tags')
+            .delete()
+            .eq('article_id', id);
+
+        if(tagsError){
+            console.error('Error deleting article tags:', tagsError);
+            throw tagsError;
+        }
+
+        // 2. Delete article
+        const { error: articleError } = await db
+            .from('articles')
+            .delete()
+            .eq('id', id);
+
+        if(articleError){
+            console.error('Error deleting article:', articleError);
+            throw articleError;
+        }
+
+        // Invalidate cache
+        await redis.del(REDIS_KEY.ARTICLES(id));
+        await redis.del(REDIS_KEY.ARTICLES_TAGS(id));
+
+    } catch (error) {
+        console.error('Error deleting article:', error);
+        throw error;
+    }
+}
+
+export async function uploadImage(image: File): Promise<string> {
+    // TODO: implement image upload, create an access url for that image, return the url 
+
+    return 'url'
 }

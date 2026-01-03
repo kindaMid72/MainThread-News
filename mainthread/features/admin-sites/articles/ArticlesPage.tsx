@@ -221,7 +221,7 @@ export default function ArticlesPage() {
                     </div>
                     <div
                         onClick={handleCreateNewArticle}
-                        className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+                        className="flex items-center gap-2 cursor-pointer bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
                     >
                         <Plus className="w-5 h-5" />
                         Create New Article
@@ -369,28 +369,6 @@ export default function ArticlesPage() {
                                                     >
                                                         <Eye className="w-4 h-4" />
                                                     </Link>
-                                                    {article.status === 'draft' || article.status === 'review' && (
-                                                        <button
-                                                            className="p-2 text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
-                                                            title="Publish"
-                                                        >
-                                                            <FileCheck className="w-4 h-4" />
-                                                        </button>
-                                                    )}
-                                                    {article.status === 'published' && (
-                                                        <button
-                                                            className="p-2 text-orange-600 cursor-pointer hover:bg-orange-50 rounded transition-colors"
-                                                            title="Unpublish"
-                                                        >
-                                                            <FileX className="w-4 h-4" />
-                                                        </button>
-                                                    )}
-                                                    <button
-                                                        className="p-2 text-red-600 cursor-pointer hover:bg-red-50 rounded transition-colors"
-                                                        title="Delete"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
