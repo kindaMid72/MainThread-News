@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-, "testing/test.ts"  ],
+, "testing/test.ts", "utils/inputTools/inputImage.jsx"  ],
   "exclude": ["node_modules"]
 }

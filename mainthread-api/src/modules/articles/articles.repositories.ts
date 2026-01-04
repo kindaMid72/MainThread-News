@@ -2,7 +2,10 @@ import dbAccess from '../../config/database/createDbAccess'
 import redis from '../../config/redis/createRedisAccess'
 
 //types
-import { ArticleQuery, Article } from './articles.types'
+import { ArticleQuery, Article, ArticleImage } from './articles.types';
+import { TagQuery, Tag } from '../tags/tags.types';
+
+import {REDIS_KEY} from '../../const/const.redis'
 
 export async function createArticleReturnId({authorId}: {authorId: string}) : Promise<string>{
     try {
@@ -216,5 +219,222 @@ export async function getArticlesPreviousPage({cursor, limit, direction, categor
     } catch (error) {
         console.error('Error getting articles:', error);
         throw error;
+    }
+}
+
+export async function getArticleById(id: string): Promise<ArticleQuery> {
+    try {
+
+        // check redis cache
+        const cachedArticle = await redis.get(REDIS_KEY.ARTICLES(id));
+        if (cachedArticle) {
+            return cachedArticle;
+        }
+
+        const db = await dbAccess();
+        const {data: article, error} = await db
+            .from('articles')
+            .select()
+            .eq('id', id)
+            .single();
+
+        if (error) {
+            console.error('Error getting article:', error);
+            throw error;
+        }
+
+        // set cache
+        await redis.set(REDIS_KEY.ARTICLES(id), article);
+
+        return article;
+    } catch (error) {
+        console.error('Error getting article:', error);
+        throw error;
+    }
+}
+
+export async function getArticleTagsById(id: string): Promise<TagQuery[]> {
+    try {
+        // check redis cache
+        const cachedArticleTags = await redis.get(REDIS_KEY.ARTICLES_TAGS(id));
+        if (cachedArticleTags) {
+            return cachedArticleTags as TagQuery[];
+        }
+
+        const db = await dbAccess();
+        const {data: articleTags, error} = await db
+            .from('article_tags')
+            .select('tag_id')
+            .eq('article_id', id);
+
+        if (error) {
+            console.error('Error getting article tags:', error);
+            throw error;
+        }
+
+        // set cache
+        await redis.set(REDIS_KEY.ARTICLES_TAGS(id), articleTags);
+
+        return articleTags as TagQuery[];
+    } catch (error) {
+        console.error('Error getting article tags:', error);
+        throw error;
+    }
+}
+
+export async function updateArticle(id: string, updates: Partial<ArticleQuery>): Promise<void> {
+    try {
+        const db = await dbAccess();
+        const { error } = await db
+            .from('articles')
+            .update({
+                ...updates,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', id);
+
+        if (error) {
+            console.error('Error updating article:', error);
+            throw error;
+        }
+
+        // Invalidate cache
+        await redis.del(REDIS_KEY.ARTICLES(id));
+    } catch (error) {
+        console.error('Error updating article:', error);
+        throw error;
+    }
+}
+
+export async function updateArticleTags(articleId: string, tagIds: string[]): Promise<void> {
+    try {
+        const db = await dbAccess();
+
+        // 1. Delete existing tags for this article
+        const {error: deleteError} = await db
+            .from('article_tags')
+            .delete()
+            .eq('article_id', articleId);
+
+        if (deleteError) {
+            console.error('Error deleting old article tags:', deleteError);
+            throw deleteError;
+        }
+
+        // 2. Insert new tags, if there are any to add, if its empty, do nothing
+        if (tagIds.length > 0) {
+            const newTags = tagIds.map(tagId => ({
+                article_id: articleId,
+                tag_id: tagId
+            }));
+
+            const { error: insertError } = await db
+                .from('article_tags')
+                .insert([
+                    ...newTags.map(tags=> ({
+                        article_id: articleId,
+                        tag_id: tags.tag_id
+                    }))
+                ])
+
+            if (insertError) {
+                console.error('Error inserting new article tags:', insertError);
+                throw insertError;
+            }
+        }
+
+        // Invalidate cache
+        await redis.del(REDIS_KEY.ARTICLES_TAGS(articleId));
+    } catch (error) {
+        console.error('Error updating article tags:', error);
+        throw error;
+    }
+}
+
+export async function deleteArticle(id: string): Promise<void> {
+    try {
+        const db = await dbAccess();
+
+        // 1. Delete article tags (foreign key might handle this with CASCADE, but manual is safer/explicit)
+        const { error: tagsError } = await db
+            .from('article_tags')
+            .delete()
+            .eq('article_id', id);
+
+        if(tagsError){
+            console.error('Error deleting article tags:', tagsError);
+            throw tagsError;
+        }
+
+        // 2. Delete article
+        const { error: articleError } = await db
+            .from('articles')
+            .delete()
+            .eq('id', id);
+
+        if(articleError){
+            console.error('Error deleting article:', articleError);
+            throw articleError;
+        }
+
+        // Invalidate cache
+        await redis.del(REDIS_KEY.ARTICLES(id));
+        await redis.del(REDIS_KEY.ARTICLES_TAGS(id));
+
+    } catch (error) {
+        console.error('Error deleting article:', error);
+        throw error;
+    }
+}
+
+export async function uploadImage(image: Buffer, path: string, metadata: {name?: string, type?: string, size?: number, path?: string, article_id?: string}): Promise<string> {
+    // TODO: implement image upload, create an access url for that image, return the url    
+    // 
+    const TEN_YEARS = 10 * 365 * 24 * 60 * 60;
+    try{
+        const db = await dbAccess();
+        // upload image to supabase storage
+        const {error} = await db.storage.from('images').upload(path, image, {
+            contentType: metadata?.type || 'image/jpeg',    
+            upsert: false
+        });
+        if(error){
+            console.error('Error uploading image:', error);
+            throw error;
+        }
+        
+        // create iamge url
+
+        const {data: imageUrl, error: urlError} = await db.storage.from('images').createSignedUrl(path, TEN_YEARS);
+        if(urlError){
+            console.error('Error creating image url:', urlError);
+            throw urlError;
+        }
+
+        const finalUrl = imageUrl?.signedUrl as string;
+        
+        // insert image url & metadata to media_images
+            const { data: insertedImage, error: insertError } = await db
+                .from('media_images')
+                .insert([
+                    {
+                        image_url: finalUrl,
+                        metadata: metadata,
+                        article_id: metadata.article_id
+                    }
+                ])
+                .select()
+                .single();
+
+        if(insertError){
+            console.error('Error inserting image:', insertError);
+            throw insertError;
+        }
+        // return image url
+    
+        return finalUrl;
+
+    }catch(error){
+        throw new Error('Error uploading image: ' + error);
     }
 }

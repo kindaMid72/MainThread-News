@@ -1,6 +1,6 @@
 "use client"
 
-import { EditorContent, EditorContext, generateJSON, useEditor } from "@tiptap/react"
+import { EditorContent, EditorContext, useEditor } from "@tiptap/react"
 import { useEffect, useRef, useState } from "react"
 
 // --- Tiptap Core Extensions ---
@@ -63,6 +63,7 @@ import { LinkIcon } from "@/components/tiptap-icons/link-icon"
 import { useCursorVisibility } from "@/hooks/use-cursor-visibility"
 import { useIsBreakpoint } from "@/hooks/use-is-breakpoint"
 import { useWindowSize } from "@/hooks/use-window-size"
+import { getAuthHeader } from "@/libs/supabase/createBrowserClient"
 
 // --- Components ---
 import { ThemeToggle } from "@/components/tiptap-templates/simple/theme-toggle"
@@ -182,7 +183,7 @@ const MobileToolbarContent = ({
   </>
 )
 
-export function SimpleEditor({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+export function SimpleEditor({ value, onChange, articleId }: { value: string, onChange?: (content: string) => void, articleId?: string }) {
   const isMobile = useIsBreakpoint()
   const { height } = useWindowSize()
   const [mobileView, setMobileView] = useState<"main" | "highlighter" | "link">(
@@ -196,7 +197,7 @@ export function SimpleEditor({ value, onChange }: { value: string; onChange: (va
       attributes: {
         autocomplete: "off",
         autocorrect: "off",
-        autocapitalize: "on",
+        autocapitalize: "off",
         "aria-label": "Main content area, start typing to enter text.",
         class: "simple-editor",
       },
@@ -223,13 +224,16 @@ export function SimpleEditor({ value, onChange }: { value: string; onChange: (va
         accept: "image/*",
         maxSize: MAX_FILE_SIZE,
         limit: 3,
-        upload: handleImageUpload,
+        upload: async (file, onProgress, abortSignal) => {
+          const token = await getAuthHeader()
+          return handleImageUpload(file, articleId as string, onProgress, abortSignal, token)
+        },
         onError: (error) => console.error("Upload failed:", error),
       }),
     ],
-    content: generateJSON(value || "", [StarterKit]), // value: HTML string, convert to JSON
+    content: value,
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML()) // save HTML string to state
+      onChange?.(editor.getHTML())
     },
   })
 
@@ -249,7 +253,6 @@ export function SimpleEditor({ value, onChange }: { value: string; onChange: (va
       <EditorContext.Provider value={{ editor }}>
         <Toolbar
           ref={toolbarRef}
-          className="w-full flex-wrap border-b border-gray-200 sticky top-0 z-10 bg-white"
           style={{
             ...(isMobile
               ? {
@@ -275,7 +278,7 @@ export function SimpleEditor({ value, onChange }: { value: string; onChange: (va
         <EditorContent
           editor={editor}
           role="presentation"
-          className="simple-editor-content text-gray-900"
+          className="simple-editor-content"
         />
       </EditorContext.Provider>
     </div>

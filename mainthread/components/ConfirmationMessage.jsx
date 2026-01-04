@@ -87,7 +87,7 @@ export default function ConfirmationMessage({
                             disabled={delayCancel && timeLeft > 0}
                             className={`flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors cursor-pointer ${colorMap.gray.disabled}`}
                         >
-                            Batalkan
+                            Cancel
                         </button>
 
                         <button
@@ -95,7 +95,7 @@ export default function ConfirmationMessage({
                             disabled={delayConfirm && timeLeft > 0}
                             className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 cursor-pointer ${activeStyle.bg} ${activeStyle.hover} ${activeStyle.text} ${activeStyle.disabled}`}
                         >
-                            {delayConfirm && timeLeft > 0 ? `Tunggu (${timeLeft}s)` : 'Konfirmasi'}
+                            {delayConfirm && timeLeft > 0 ? `Wait (${timeLeft}s)` : 'Confirm'}
                         </button>
                     </div>
                 </div>

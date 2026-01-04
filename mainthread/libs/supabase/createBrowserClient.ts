@@ -17,4 +17,11 @@ export async function getUserSession() {
     ).auth.getSession();
 }
 
+export async function getAuthHeader() {
+    const supabase = await createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    ).auth.getSession();
+    return `Bearer ${supabase.data.session?.access_token}`;
+}
 export default createClient;

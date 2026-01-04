@@ -1,7 +1,18 @@
-import { createArticleReturnId, getArticlesFirstPage, getArticlesNextPage, getArticlesPreviousPage } from "./articles.repositories";
+import {
+    createArticleReturnId,
+    deleteArticle,
+    getArticleById,
+    getArticleTagsById,
+    getArticlesFirstPage,
+    getArticlesNextPage,
+    getArticlesPreviousPage,
+    updateArticle,
+    updateArticleTags,
+    uploadImage
+} from "./articles.repositories";
 
 // types
-import { ArticleQuery } from "./articles.types";
+import { ArticleQuery, ArticleTag } from "./articles.types";
 
 // utils
 import extractIdFromToken from "../../utils/authTools/extracIdFromToken";
@@ -25,6 +36,8 @@ export async function getArticlesService({ cursor, limit, direction, category, s
     // return articles, {nextCursor, prevCursor, hasPrev, hasNext}(encoded)
 
     // determine if the request is first page, next page, or previous page
+
+    search = search?.trim();
 
     // console.log(cursor, limit, direction, category, status, asc);
     if (!cursor) {
@@ -101,6 +114,58 @@ export async function getArticlesService({ cursor, limit, direction, category, s
         return { articles: queryResult, cursor: cursorEncoded, hasNext, hasPrev };
     } else {
         throw new Error('Invalid direction');
+    }
+
+}
+
+
+export async function getArticleService(id: string): Promise<{article: ArticleQuery, articleTags: ArticleTag[] }> {
+
+    // get article by id
+    const article = await getArticleById(id);
+
+    // get article & tags relation by id, return related tags id
+    const articleTags = await getArticleTagsById(id);
+
+    return { article, articleTags };
+}
+
+export async function updateArticleService(id: string, updates: Partial<ArticleQuery>, tagIds?: string[]): Promise<void> {
+
+    // update article
+    if(Object.keys(updates).length > 0){ // check if there any field to update, well there should be some
+        await updateArticle(id, updates);
+    }
+
+    // update tags if provided, perform update on article_tags table
+    if(tagIds){ // check if there any tag to update
+        await updateArticleTags(id, tagIds);
+    }
+}
+
+export async function deleteArticleService(id: string): Promise<void> {
+    await deleteArticle(id);
+}
+
+export async function uploadImageService(image: Express.Multer.File, articleId: string): Promise<string> {
+    try{
+        const imageBuffer = image.buffer;
+        const currentTime = new Date().toISOString();
+        // property
+        const path = 'images/thumbnail/' + currentTime +'-' + image.originalname
+        // create metadata
+        const medatata = {
+            name: image.originalname,
+            size: image.size,
+            type: image.mimetype,
+            path: path,
+            article_id: articleId
+        }
+
+        const imageUrl = await uploadImage(imageBuffer, path, medatata);
+        return imageUrl;
+    }catch(error){
+        throw new Error('upload file failed');
     }
 
 }

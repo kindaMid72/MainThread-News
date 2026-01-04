@@ -1,26 +1,23 @@
 "use client";
 
-import { format } from 'date-fns';
-import { ChevronLeft, ChevronRight, Edit, Eye, FileCheck, FileX, Plus, Search, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Edit, Eye, Plus, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 // api
 import api from '@/libs/axiosInterceptor/axiosAdminInterceptor';
 
 // Data types
-import { ArticleQuery, ArticleTableViews, Article } from '@/types/Article.type';
+import { ArticleQuery } from '@/types/Article.type';
 
 // components
-import PopUpMessage from '@/components/PopUpMessage';
 import ErrorWithRefreshButton from '@/components/ErrorWithRefreshButton';
-import LoadingSkeletonTableOnly from '@/components/LoadingSkeletonTabelOnly';
 import LoadingSkeletonTable from '@/components/LoadingSkeletonTabel';
 
 // types
-import { Categories, CategoriesQuery } from '@/types/Category.type';
-import { UserQuery, User } from '@/types/User.types';
+import { CategoriesQuery } from '@/types/Category.type';
+import { User } from '@/types/User.types';
 
 // Sample placeholder data TODO: fetch real data, apply pagination
 
@@ -56,7 +53,7 @@ export default function ArticlesPage() {
         message: '',
         type: '',
         duration: 2000,
-        onClose: () => {}
+        onClose: () => { }
     });
 
     const getStatusBadge = (status: string) => {
@@ -84,7 +81,7 @@ export default function ArticlesPage() {
                 message: 'Article created successfully',
                 type: 'success',
                 duration: 2000,
-                onClose: () => {}
+                onClose: () => { }
             });
             router.push(`/admin/${params.userId}/articles/edit/${id}`); // fetch by edit page after created and redirect to edit page
         } else {
@@ -112,7 +109,7 @@ export default function ArticlesPage() {
                     setCategories(response.data);
                 }
             };
-            fetchCategories(); 
+            fetchCategories();
             // fetch user data
             const fetchUserData = async () => {
                 const response = await api.get('/api/admin/teams/get-all-users');
@@ -144,13 +141,13 @@ export default function ArticlesPage() {
                 }
             });
 
-            if(response.status === 200){
+            if (response.status === 200) {
                 setArticles(response.data.articles);
                 setCursor(response.data.cursor);
                 setHasPrev(response.data.hasPrev);
                 setHasNext(response.data.hasNext);
                 setIsErrorFetch(false);
-            }else{
+            } else {
                 setIsErrorFetch(true);
             }
         } catch (error) {
@@ -160,12 +157,12 @@ export default function ArticlesPage() {
 
     const handleNextPage = () => {
         if (hasNext && cursor) {
-            try{
+            try {
                 setIsLoadingTabel(true);
                 fetchArticles(cursor, 'forward');
-            }catch(error){
+            } catch (error) {
                 setIsErrorFetch(true);
-            }finally{
+            } finally {
                 setIsLoadingTabel(false);
             }
         }
@@ -173,12 +170,12 @@ export default function ArticlesPage() {
 
     const handlePrevPage = () => {
         if (hasPrev && cursor) {
-            try{
+            try {
                 setIsLoadingTabel(true);
                 fetchArticles(cursor, 'backward');
-            }catch(error){
+            } catch (error) {
                 setIsErrorFetch(true);
-            }finally{
+            } finally {
                 setIsLoadingTabel(false);
             }
         }
@@ -187,12 +184,12 @@ export default function ArticlesPage() {
 
     // useEffect handler
     useEffect(() => {
-        try{
+        try {
             setIsLoadingTabel(true);
             fetchArticles();
-        }catch(error){
+        } catch (error) {
             setIsErrorFetch(true);
-        }finally{
+        } finally {
             setIsLoadingTabel(false);
         }
     }, [categoryFilter, statusFilter, ascFilter, searchQuery]);
@@ -201,10 +198,10 @@ export default function ArticlesPage() {
         initialFetch();
     }, []);
 
-    if(isLoadingFetch){
+    if (isLoadingFetch) {
         return <LoadingSkeletonTable />
     }
-    if(isErrorFetch){
+    if (isErrorFetch) {
         return <ErrorWithRefreshButton onRefresh={initialFetch} />
     }
 
@@ -221,7 +218,7 @@ export default function ArticlesPage() {
                     </div>
                     <div
                         onClick={handleCreateNewArticle}
-                        className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+                        className="flex items-center gap-2 cursor-pointer bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
                     >
                         <Plus className="w-5 h-5" />
                         Create New Article
@@ -279,134 +276,125 @@ export default function ArticlesPage() {
                         </div>
                     </div>
                 </div>
-                    
+
                 {/* Articles Table */}
                 {isLoadingTabel ? <LoadingSkeletonTable /> : (
-                <div className="bg-white rounded-lg shadow-sm overflow-hidden border">
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead className="bg-gray-50 border-b">
-                                <tr>
-                                    <th className="px-6 py-3 text-left text-xs uppercase tracking-wider text-gray-600 font-semibold">
-                                        Artikel
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs uppercase tracking-wider text-gray-600 font-semibold">
-                                        Status
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs uppercase tracking-wider text-gray-600 font-semibold">
-                                        Penulis
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs uppercase tracking-wider text-gray-600 font-semibold">
-                                        Kategori
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs uppercase tracking-wider text-gray-600 font-semibold">
-                                        Tanggal Publish
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs uppercase tracking-wider text-gray-600 font-semibold">
-                                        Views
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs uppercase tracking-wider text-gray-600 font-semibold">
-                                        Aksi
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200">
-                                {articles.map((article: ArticleQuery) => {
-                                    return (
-                                        <tr key={article.id} className="hover:bg-gray-50">
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-start gap-3">
-                                                    <img
-                                                        src={article.thumbnail_url || 'https://placehold.co/400'}
-                                                        alt={article.title}
-                                                        className="w-16 h-16 object-cover rounded shrink-0 bg-gray-200"
-                                                    />
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="font-medium text-gray-900 line-clamp-2 mb-1">
-                                                            {article.title}
-                                                        </div>
-                                                        <div className="text-sm text-gray-500 line-clamp-1">
-                                                            {article.source_type}
+                    <div className="bg-white rounded-lg shadow-sm overflow-hidden border">
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead className="bg-gray-50 border-b">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs uppercase tracking-wider text-gray-600 font-semibold">
+                                            Article
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs uppercase tracking-wider text-gray-600 font-semibold">
+                                            Status
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs uppercase tracking-wider text-gray-600 font-semibold">
+                                            Author
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs uppercase tracking-wider text-gray-600 font-semibold">
+                                            Category
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs uppercase tracking-wider text-gray-600 font-semibold">
+                                            Last Edited
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs uppercase tracking-wider text-gray-600 font-semibold">
+                                            Views
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs uppercase tracking-wider text-gray-600 font-semibold">
+                                            Action
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200">
+                                    {articles.map((article: ArticleQuery) => {
+                                        return (
+                                            <tr key={article.id} className="hover:bg-gray-50">
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-start gap-3">
+                                                        <img
+                                                            src={article.thumbnail_url || 'https://placehold.co/400'}
+                                                            alt={article.title}
+                                                            className="w-16 h-16 object-cover rounded shrink-0 bg-gray-200"
+                                                        />
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="font-medium text-gray-900 line-clamp-2 mb-1">
+                                                                {article.title}
+                                                            </div>
+                                                            <div className="text-sm text-gray-500 line-clamp-1">
+                                                                {article.source_type}
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getStatusBadge(article.status as string)}`}>
-                                                    {article.status}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="text-sm text-gray-900">{userData?.filter((user) => user.userId === article.author_id)[0]?.name || 'No Author'}</div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="text-sm text-gray-900">{categories.filter((category) => category.id === article.category_id)[0]?.name || 'No Category'}</div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="text-sm text-gray-900">{format(new Date(article.published_at as string), 'dd MMM yyyy')}</div>
-                                                <div className="text-xs text-gray-500">{format(new Date(article.published_at as string), 'HH:mm')}</div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-1 text-sm text-gray-600">
-                                                    <Eye className="w-4 h-4 text-gray-400" />
-                                                    {article.view_count?.toLocaleString('id-ID')}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-2">
-                                                    <Link
-                                                        href={`/admin/${params.userId}/articles/edit/${article.id}`}
-                                                        className="p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                                                        title="Edit"
-                                                    >
-                                                        <Edit className="w-4 h-4" />
-                                                    </Link>
-                                                    <Link // 'archived' | 'draft' | 'review' | 'published';
-                                                        href={`/admin/${params.userId}/articles/edit/${article.id}`}
-                                                        target="_blank"
-                                                        className="p-2 text-green-600 hover:bg-green-50 rounded transition-colors"
-                                                        title="Preview"
-                                                    >
-                                                        <Eye className="w-4 h-4" />
-                                                    </Link>
-                                                    {article.status === 'draft' || article.status === 'review' && (
-                                                        <button
-                                                            className="p-2 text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
-                                                            title="Publish"
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getStatusBadge(article.status as string)}`}>
+                                                        {article.status}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="text-sm text-gray-900">{userData?.filter((user) => user.userId === article.author_id)[0]?.name || 'No Author'}</div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="text-sm text-gray-900">{categories.filter((category) => category.id === article.category_id)[0]?.name || 'No Category'}</div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="text-sm text-gray-900">
+                                                        {new Intl.DateTimeFormat('id-ID', {
+                                                            timeZone: 'Asia/Jakarta',
+                                                            day: '2-digit',
+                                                            month: 'short',
+                                                            year: 'numeric'
+                                                        }).format(new Date(article.published_at as string))}
+                                                    </div>
+                                                    <div className="text-xs text-gray-500">
+                                                        {new Intl.DateTimeFormat('id-ID', {
+                                                            timeZone: 'Asia/Jakarta',
+                                                            hour: '2-digit',
+                                                            minute: '2-digit'
+                                                        }).format(new Date(article.published_at as string))}
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center gap-1 text-sm text-gray-600">
+                                                        <Eye className="w-4 h-4 text-gray-400" />
+                                                        {article.view_count?.toLocaleString('id-ID')}
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <Link
+                                                            href={`/admin/${params.userId}/articles/edit/${article.id}`}
+                                                            className="p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                            title="Edit"
                                                         >
-                                                            <FileCheck className="w-4 h-4" />
-                                                        </button>
-                                                    )}
-                                                    {article.status === 'published' && (
-                                                        <button
-                                                            className="p-2 text-orange-600 cursor-pointer hover:bg-orange-50 rounded transition-colors"
-                                                            title="Unpublish"
+                                                            <Edit className="w-4 h-4" />
+                                                        </Link>
+                                                        <Link // 'archived' | 'draft' | 'review' | 'published';
+                                                            href={`/admin/${params.userId}/articles/edit/${article.id}`}
+                                                            target="_blank"
+                                                            className="p-2 text-green-600 hover:bg-green-50 rounded transition-colors"
+                                                            title="Preview"
                                                         >
-                                                            <FileX className="w-4 h-4" />
-                                                        </button>
-                                                    )}
-                                                    <button
-                                                        className="p-2 text-red-600 cursor-pointer hover:bg-red-50 rounded transition-colors"
-                                                        title="Delete"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    )
-                                }
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {articles.length === 0 && (
-                        <div className="text-center py-16 text-gray-500">
-                            Tidak ada artikel ditemukan
+                                                            <Eye className="w-4 h-4" />
+                                                        </Link>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )
+                                    }
+                                    )}
+                                </tbody>
+                            </table>
                         </div>
-                    )}
-                </div>)}
+
+                        {articles.length === 0 && (
+                            <div className="text-center py-16 text-gray-500">
+                                Tidak ada artikel ditemukan
+                            </div>
+                        )}
+                    </div>)}
 
                 {/* Pagination */}
                 <div className="flex items-center justify-between px-4 py-3 bg-white border border-gray-200 mt-4 rounded-lg shadow-sm">

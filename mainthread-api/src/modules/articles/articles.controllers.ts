@@ -1,19 +1,29 @@
 import express from 'express';
+import multer from 'multer';
 
 // middlewares
 import articlesMiddlewares from './articles.middlewares';
 
 // services
-import { createArticleService, getArticlesService } from './articles.services';
+import {
+    createArticleService,
+    deleteArticleService,
+    getArticleService,
+    getArticlesService,
+    updateArticleService,
+    uploadImageService
+} from './articles.services';
 
 // logs
 import createLog from '../../logging/log.admin.action';
 
 // utils
 import extractIdFromToken from '../../utils/authTools/extracIdFromToken';
-import { ArticleQuery } from './articles.types';
+import { ArticleQuery, ArticleTag } from './articles.types';
 
 const router = express.Router();
+// multer setup
+const upload = multer({storage: multer.memoryStorage()})
 
 router.use(articlesMiddlewares);
 
@@ -54,7 +64,7 @@ router.get('/get-articles-on-given-page', async (req, res) => {
             search: string;
         }
 
-        // TODO: implement pagination back and forward with cursor implementation
+        // implement pagination back and forward with cursor implementation
         // req: 
         // - cursor: crypted object or null
         // - limit: number
@@ -86,7 +96,120 @@ router.get('/get-articles-on-given-page', async (req, res) => {
     }
 })
 
+router.get('/get-article-by-id/:id', async (req, res) => {
+    try{
+        // req: 
+        // - id: string
 
+        // response: ArticleQuery
+
+        // check input
+        const id = req.params.id;
+        if(!id){
+            return res.status(400).json({ error: 'Missing article id' });
+        }
+
+        // call service, return ArticleQuery
+        const getArticleServiceResponse: {article: ArticleQuery, articleTags: ArticleTag[] } = await getArticleService(id);
+
+        // return response
+        res.status(200).json(getArticleServiceResponse);
+    }catch(error){
+        console.error('Error getting article:', error);
+        res.status(500).json({ error: 'Failed to get article' });
+    }
+})
+
+router.put('/update-article-by-id/:id', async (req, res) => {
+    try {
+        // req:
+        // - id: string
+        // - updates: Partial<ArticleQuery>
+        // - tag_ids?: string[]
+
+        const { id, tag_ids, ...updates } = req.body;
+
+        if (!id) {
+            return res.status(400).json({ error: 'Missing article id' });
+        }
+
+        // create log
+        await updateArticleService(id, updates, tag_ids);
+        
+        createLog({
+            adminId: await extractIdFromToken(req.headers.authorization as string) as string,
+            action: 'update article',
+            entityId: id as string,
+            entityType: 'article',
+            metadata: {
+                articleId: id as string
+            }
+        });
+
+
+        res.status(200).json({ message: 'Article updated successfully' });
+    } catch (error) {
+        console.error('Error updating article:', error);
+        res.status(500).json({ error: 'Failed to update article' });
+    }
+})
+
+router.delete('/delete-article-by-id/:id', async (req, res) => {
+    try {
+        const id = req.params.id;
+        if (!id) {
+            return res.status(400).json({ error: 'Missing article id' });
+        }
+
+        await deleteArticleService(id);
+
+        // create log
+        createLog({
+            adminId: await extractIdFromToken(req.headers.authorization as string) as string,
+            action: 'delete article',
+            entityId: id as string,
+            entityType: 'article',
+            metadata: {
+                articleId: id as string
+            }
+        });
+
+        res.status(200).json({ message: 'Article deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting article:', error);
+        res.status(500).json({ error: 'Failed to delete article' });
+    }
+})
+
+router.post('/upload-image/:articleId', upload.single('file'),  async (req, res) => {
+    try {
+
+        // TODO: config image and its metadata
+        const image: Express.Multer.File | undefined = req.file;
+        const articleId = req.params.articleId;
+        if (!image) {
+            return res.status(400).json({ error: 'Missing image,buffer' });
+        }
+
+        const imageUrl = await uploadImageService(image as Express.Multer.File, articleId as string);
+
+        // create log
+        createLog({
+            adminId: await extractIdFromToken(req.headers.authorization as string) as string,
+            action: 'upload image',
+            entityId: imageUrl as string,
+            entityType: 'image',
+            metadata: {
+                imageUrl: imageUrl as string
+            }
+        });
+
+        res.status(200).json({ imageUrl });
+    } catch (error) {
+        console.error('Error uploading image:', error);
+        res.status(500).json({ error: 'Failed to upload image' });
+    }
+})
 
 
 export default router;
