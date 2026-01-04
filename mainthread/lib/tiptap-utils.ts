@@ -13,6 +13,9 @@ import {
   type NodeWithPos,
 } from "@tiptap/react"
 
+// import api
+import api from "@/libs/axiosInterceptor/axiosAdminInterceptor"
+
 export const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 
 export const MAC_SYMBOLS: Record<string, string> = {
@@ -360,8 +363,10 @@ export function selectionWithinConvertibleTypes(
  */
 export const handleImageUpload = async (
   file: File,
+  articleId: string,
   onProgress?: (event: { progress: number }) => void,
-  abortSignal?: AbortSignal
+  abortSignal?: AbortSignal,
+  authHeader?: string
 ): Promise<string> => {
   // Validate file
   if (!file) {
@@ -376,18 +381,30 @@ export const handleImageUpload = async (
 
   // For demo/testing: Simulate upload progress. In production, replace the following code
   // with your own upload implementation.
-  // TODO: implement upload logic here
-  for (let progress = 0; progress <= 100; progress += 10) {
-    if (abortSignal?.aborted) {
-      throw new Error("Upload cancelled")
-    }
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    onProgress?.({ progress })
+  
+  try {
+    const formData = new FormData()
+    formData.append("file", file)
+
+    // get params from url
+    
+    
+    const response = await api.post(`/api/admin/articles/upload-image/${articleId}`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+      onUploadProgress: (progressEvent) => {
+        const progress = Math.round(
+          (progressEvent.loaded * 100) / (progressEvent?.total as number)
+        )
+        onProgress?.({ progress })
+      },
+    })
+    return response.data.imageUrl
+  } catch (error) {
+    console.error("Upload failed:", error)
+    return "/images/tiptap-ui-placeholder-image.jpg"
   }
-
-  // TODO: perform data upload and return url from server for views
-
-  return "/images/tiptap-ui-placeholder-image.jpg"
 }
 
 type ProtocolOptions = {

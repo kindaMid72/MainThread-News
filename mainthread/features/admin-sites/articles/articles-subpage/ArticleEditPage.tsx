@@ -13,6 +13,8 @@ import { Check, CloudUpload } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import EditArticleSkeletonLoading from '../components/EditArticleSkeletonLoading';
 
+// get user
+
 // Mock current author for now - in real app, get from auth context
 
 // api
@@ -118,7 +120,7 @@ export default function ArticleEditPage() {
                     setSelectedTagIds(tagIds);
                     setInitialTagIds(tagIds); // for tracking changes
                 }
-                setInitialData({...articleData.article, tag_ids: tagIds});
+                setInitialData({ ...articleData.article, tag_ids: tagIds });
 
                 // fetch tags & categories
                 const [categoriesRes, tagsRes] = await Promise.all([
@@ -193,7 +195,7 @@ export default function ArticleEditPage() {
 
     // property handlers
     const handleInputChange = (field: keyof ArticleQuery, value: any) => {
-        if(field === 'slug'){
+        if (field === 'slug') {
             setFormData(prev => ({ ...prev, [field]: value.toLowerCase().replace(/[^a-zA-Z0-9\-_.~]/g, '-').replace(/-{2,}/g, '-') }));
             return;
         }
@@ -295,7 +297,7 @@ export default function ArticleEditPage() {
             }
         } catch (error: any) {
             setMessage({ type: 'error', text: error.message || 'Failed to upload thumbnail' });
-        }finally{
+        } finally {
             setUploadingThumbnail(false);
         }
     };
@@ -314,8 +316,8 @@ export default function ArticleEditPage() {
                 <ConfirmationMessage
                     title="Save Changes?"
                     message="Save changes before leaving?"
-                    onConfirm={() => {setIsConfirmMessageOpen(false); handleSubmit();}}
-                    onCancel={() => {setIsConfirmMessageOpen(false); setIsDirty(false);}}
+                    onConfirm={() => { setIsConfirmMessageOpen(false); handleSubmit(); }}
+                    onCancel={() => { setIsConfirmMessageOpen(false); setIsDirty(false); }}
                     delayCancel={false}
                     delayConfirm={false}
                     confirmColor='green'
@@ -437,6 +439,7 @@ export default function ArticleEditPage() {
                             <EditorTextBox
                                 value={formData.content_html}
                                 onChange={(html) => handleInputChange('content_html', html)} // set new html to local state
+                                articleId={params.editArticleId as string}
                             />
                         </div>
                     </div>
@@ -539,13 +542,13 @@ export default function ArticleEditPage() {
                                     <Loader2 className="w-6 h-6 animate-spin" />
                                 </div>
                             )} */}
-                            <label className="text-xs font-medium text-gray-500 uppercase flex flex-nowrap items-center gap-1"><span>{uploadingThumbnail?'Uploading...':'Upload Image'}</span> <span>{uploadingThumbnail ? <span className="text-blue-800 flex flex-row items-center gap-1 flex-nowrap"><Loader2 className="w-3 h-3 animate-spin" /></span>: ''}</span></label>
+                            <label className="text-xs font-medium text-gray-500 uppercase flex flex-nowrap items-center gap-1"><span>{uploadingThumbnail ? 'Uploading...' : 'Upload Image'}</span> <span>{uploadingThumbnail ? <span className="text-blue-800 flex flex-row items-center gap-1 flex-nowrap"><Loader2 className="w-3 h-3 animate-spin" /></span> : ''}</span></label>
                             <div className="flex gap-2">
-                                <InputImage className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" 
-                                onProcessed={(proceeded: any) => {
-                                    handleUploadThumbnail(proceeded);
+                                <InputImage className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                    onProcessed={(proceeded: any) => {
+                                        handleUploadThumbnail(proceeded);
 
-                                }} />
+                                    }} />
                             </div>
                             <label className="text-xs font-medium text-gray-500 uppercase">Image URL</label>
                             <div className="flex gap-2">
