@@ -147,6 +147,25 @@ export async function deleteArticleService(id: string): Promise<void> {
     await deleteArticle(id);
 }
 
-export async function uploadImageService(image: File): Promise<string> {
-    return await uploadImage(image);
+export async function uploadImageService(image: Express.Multer.File, articleId: string): Promise<string> {
+    try{
+        const imageBuffer = image.buffer;
+        const currentTime = new Date().toISOString();
+        // property
+        const path = 'images/thumbnail/' + currentTime +'-' + image.originalname
+        // create metadata
+        const medatata = {
+            name: image.originalname,
+            size: image.size,
+            type: image.mimetype,
+            path: path,
+            article_id: articleId
+        }
+
+        const imageUrl = await uploadImage(imageBuffer, path, medatata);
+        return imageUrl;
+    }catch(error){
+        throw new Error('upload file failed');
+    }
+
 }

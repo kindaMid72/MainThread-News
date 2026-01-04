@@ -2,7 +2,7 @@ import dbAccess from '../../config/database/createDbAccess'
 import redis from '../../config/redis/createRedisAccess'
 
 //types
-import { ArticleQuery, Article } from './articles.types';
+import { ArticleQuery, Article, ArticleImage } from './articles.types';
 import { TagQuery, Tag } from '../tags/tags.types';
 
 import {REDIS_KEY} from '../../const/const.redis'
@@ -387,8 +387,54 @@ export async function deleteArticle(id: string): Promise<void> {
     }
 }
 
-export async function uploadImage(image: File): Promise<string> {
-    // TODO: implement image upload, create an access url for that image, return the url 
+export async function uploadImage(image: Buffer, path: string, metadata: {name?: string, type?: string, size?: number, path?: string, article_id?: string}): Promise<string> {
+    // TODO: implement image upload, create an access url for that image, return the url    
+    // 
+    const TEN_YEARS = 10 * 365 * 24 * 60 * 60;
+    try{
+        const db = await dbAccess();
+        // upload image to supabase storage
+        const {error} = await db.storage.from('images').upload(path, image, {
+            contentType: metadata?.type || 'image/jpeg',    
+            upsert: false
+        });
+        if(error){
+            console.error('Error uploading image:', error);
+            throw error;
+        }
+        
+        // create iamge url
 
-    return 'url'
+        const {data: imageUrl, error: urlError} = await db.storage.from('images').createSignedUrl(path, TEN_YEARS);
+        if(urlError){
+            console.error('Error creating image url:', urlError);
+            throw urlError;
+        }
+
+        const finalUrl = imageUrl?.signedUrl as string;
+        
+        // insert image url & metadata to media_images
+            const { data: insertedImage, error: insertError } = await db
+                .from('media_images')
+                .insert([
+                    {
+                        image_url: finalUrl,
+                        metadata: metadata,
+                        article_id: metadata.article_id
+                    }
+                ])
+                .select()
+                .single();
+
+        if(insertError){
+            console.error('Error inserting image:', insertError);
+            throw insertError;
+        }
+        // return image url
+    
+        return finalUrl;
+
+    }catch(error){
+        throw new Error('Error uploading image: ' + error);
+    }
 }

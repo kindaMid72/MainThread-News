@@ -43,3 +43,10 @@ export interface ArticleTag{
     article_id?: string;
     tag_id?: string;
 }
+
+export interface ArticleImage{
+    id?: string;
+    article_id?: string;
+    image_url?: string;
+    metadata?: string | object;
+}

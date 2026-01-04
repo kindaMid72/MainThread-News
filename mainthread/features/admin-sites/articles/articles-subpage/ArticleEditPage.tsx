@@ -18,6 +18,9 @@ import EditArticleSkeletonLoading from '../components/EditArticleSkeletonLoading
 // api
 import api from '@/libs/axiosInterceptor/axiosAdminInterceptor';
 
+// component
+import InputImage from '@/utils/inputTools/inputImage';
+
 export default function ArticleEditPage() {
     const router = useRouter();
     const params = useParams();
@@ -72,6 +75,9 @@ export default function ArticleEditPage() {
     const [categories, setCategories] = useState<CategoriesQuery[]>([]);
     const [tags, setTags] = useState<TagQuery[]>([]);
 
+    // thumbnail file upload state
+    const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+
     // UI States
     const [isLoadingFetch, setIsLoadingFetch] = useState(true);
     const [isLoadingSave, setIsLoadingSave] = useState(false);
@@ -79,6 +85,7 @@ export default function ArticleEditPage() {
     const [isAutoSaveEnabled, setIsAutoSaveEnabled] = useState(true);
     const [isDirty, setIsDirty] = useState(false);
     const [lastSavedContent, setLastSavedContent] = useState('');
+    const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
 
     const debouncedContent = useDebounce(formData.content_html, 2000); // Auto-save delay 2s
 
@@ -267,6 +274,32 @@ export default function ArticleEditPage() {
         }
     };
 
+    const handleUploadThumbnail = async (file: File) => {
+        if (!file) return;
+        try {
+            setUploadingThumbnail(true);
+            handleInputChange('thumbnail_url', ''); // kosongkan thumbnail_url sebelum upload
+            const formData = new FormData();
+            formData.append('file', file);
+            const response = await api.post(`/api/admin/articles/upload-image/${params.editArticleId}`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+            // return 200? response.data?.url: message error
+            if (response.status === 200 || response.status === 201) {
+                setMessage({ type: 'success', text: 'Thumbnail uploaded successfully!' });
+                handleInputChange('thumbnail_url', response.data?.imageUrl);
+            } else {
+                throw new Error(response.data?.message || 'Failed to upload thumbnail');
+            }
+        } catch (error: any) {
+            setMessage({ type: 'error', text: error.message || 'Failed to upload thumbnail' });
+        }finally{
+            setUploadingThumbnail(false);
+        }
+    };
+
 
     if (isLoadingFetch) {
         return (
@@ -347,7 +380,7 @@ export default function ArticleEditPage() {
                         <label className="block text-sm font-semibold text-gray-700">Article Title</label>
                         <input
                             type="text"
-                            value={formData.title}
+                            value={formData.title || ''}
                             onChange={(e) => handleInputChange('title', e.target.value)}
                             placeholder="Enter a catchy title..."
                             className="w-full px-4 py-3 text-lg text-gray-900 placeholder-gray-400 transition-colors border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
@@ -501,6 +534,19 @@ export default function ArticleEditPage() {
                     <div className="p-5 bg-white border border-gray-200 rounded-xl shadow-sm space-y-4">
                         <h3 className="font-semibold text-gray-900">Thumbnail</h3>
                         <div className="space-y-2">
+                            {/* {uploadingThumbnail && (
+                                <div className="flex items-center justify-center">
+                                    <Loader2 className="w-6 h-6 animate-spin" />
+                                </div>
+                            )} */}
+                            <label className="text-xs font-medium text-gray-500 uppercase flex flex-nowrap items-center gap-1"><span>{uploadingThumbnail?'Uploading...':'Upload Image'}</span> <span>{uploadingThumbnail ? <span className="text-blue-800 flex flex-row items-center gap-1 flex-nowrap"><Loader2 className="w-3 h-3 animate-spin" /></span>: ''}</span></label>
+                            <div className="flex gap-2">
+                                <InputImage className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" 
+                                onProcessed={(proceeded: any) => {
+                                    handleUploadThumbnail(proceeded);
+
+                                }} />
+                            </div>
                             <label className="text-xs font-medium text-gray-500 uppercase">Image URL</label>
                             <div className="flex gap-2">
                                 <input

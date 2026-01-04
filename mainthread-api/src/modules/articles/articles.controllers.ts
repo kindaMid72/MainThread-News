@@ -1,4 +1,5 @@
 import express from 'express';
+import multer from 'multer';
 
 // middlewares
 import articlesMiddlewares from './articles.middlewares';
@@ -21,6 +22,8 @@ import extractIdFromToken from '../../utils/authTools/extracIdFromToken';
 import { ArticleQuery, ArticleTag } from './articles.types';
 
 const router = express.Router();
+// multer setup
+const upload = multer({storage: multer.memoryStorage()})
 
 router.use(articlesMiddlewares);
 
@@ -178,17 +181,28 @@ router.delete('/delete-article-by-id/:id', async (req, res) => {
     }
 })
 
-router.post('/upload-image', async (req, res) => {
+router.post('/upload-image/:articleId', upload.single('file'),  async (req, res) => {
     try {
 
         // TODO: config image and its metadata
-        const image = req.body.file;
-        
+        const image: Express.Multer.File | undefined = req.file;
+        const articleId = req.params.articleId;
         if (!image) {
             return res.status(400).json({ error: 'Missing image,buffer' });
         }
 
-        const imageUrl = await uploadImageService(image);
+        const imageUrl = await uploadImageService(image as Express.Multer.File, articleId as string);
+
+        // create log
+        createLog({
+            adminId: await extractIdFromToken(req.headers.authorization as string) as string,
+            action: 'upload image',
+            entityId: imageUrl as string,
+            entityType: 'image',
+            metadata: {
+                imageUrl: imageUrl as string
+            }
+        });
 
         res.status(200).json({ imageUrl });
     } catch (error) {
