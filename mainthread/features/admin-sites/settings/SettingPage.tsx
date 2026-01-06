@@ -14,16 +14,16 @@ export default function SettingPage() {
         setTimeout(() => setIsLoading(false), 1000);
     };
     if (!featureReady) { // FIXME: full screen issue
-        return ( 
-        <div className=" flex-1 flex items-center justify-center h-full w-full bg-slate-50/30">
-            <div className="flex flex-col items-center justify-center p-8 w-full text-center text-slate-500">
-            <Construction className="w-16 h-16 mb-4 text-slate-300" />
-            <h2 className="text-lg font-medium text-slate-900 mb-2">Feature Under Construction</h2>
-            <p className="max-w-md mx-auto">We are currently working on this feature. Please check back later for updates.</p>
+        return (
+            <div className=" flex-1 flex items-center justify-center h-full w-full bg-slate-50/30">
+                <div className="flex flex-col items-center justify-center p-8 w-full text-center text-slate-500">
+                    <Construction className="w-16 h-16 mb-4 text-slate-300" />
+                    <h2 className="text-lg font-medium text-slate-900 mb-2">Feature Under Construction</h2>
+                    <p className="max-w-md mx-auto">We are currently working on this feature. Please check back later for updates.</p>
+                </div>
             </div>
-        </div>
-    );
-  }
+        );
+    }
 
     return (
         <div className="p-6">
@@ -113,7 +113,7 @@ export default function SettingPage() {
                     </div>
                     <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="relative">
-                            <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+                            <label className="text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
                                 <Facebook className="w-4 h-4 text-blue-600" /> Facebook
                             </label>
                             <input
@@ -124,7 +124,7 @@ export default function SettingPage() {
                             />
                         </div>
                         <div className="relative">
-                            <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+                            <label className="text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
                                 <Twitter className="w-4 h-4 text-sky-500" /> Twitter (X)
                             </label>
                             <input
@@ -135,7 +135,7 @@ export default function SettingPage() {
                             />
                         </div>
                         <div className="relative">
-                            <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+                            <label className="text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
                                 <Instagram className="w-4 h-4 text-pink-600" /> Instagram
                             </label>
                             <input
@@ -146,7 +146,7 @@ export default function SettingPage() {
                             />
                         </div>
                         <div className="relative">
-                            <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+                            <label className="text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
                                 <Youtube className="w-4 h-4 text-red-600" /> YouTube
                             </label>
                             <input
