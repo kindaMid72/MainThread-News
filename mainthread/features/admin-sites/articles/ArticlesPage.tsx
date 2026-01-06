@@ -5,6 +5,9 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+// hooks
+import { useDebounce } from '@/hooks/useDebounce';
+
 // api
 import api from '@/libs/axiosInterceptor/axiosAdminInterceptor';
 
@@ -39,6 +42,8 @@ export default function ArticlesPage() {
     const [isErrorEdit, setIsErrorEdit] = useState(false);
 
     const [isLoadingTabel, setIsLoadingTabel] = useState(false);
+
+    const debouncedSearchQuery = useDebounce(searchQuery, 750);
 
     // articles data
     const [articles, setArticles] = useState<ArticleQuery[]>([]);
@@ -137,7 +142,7 @@ export default function ArticlesPage() {
                     category: categoryFilter || 'all',
                     status: statusFilter || 'all',
                     asc: ascFilter === 'asc',
-                    search: searchQuery || '',
+                    search: debouncedSearchQuery || '',
                 }
             });
 
@@ -192,7 +197,7 @@ export default function ArticlesPage() {
         } finally {
             setIsLoadingTabel(false);
         }
-    }, [categoryFilter, statusFilter, ascFilter, searchQuery]);
+    }, [categoryFilter, statusFilter, ascFilter, debouncedSearchQuery]);
 
     useEffect(() => {
         initialFetch();
@@ -234,7 +239,7 @@ export default function ArticlesPage() {
                                 type="search"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="Cari artikel..."
+                                placeholder="Search articles..."
                                 className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600"
                             />
                         </div>
@@ -244,7 +249,7 @@ export default function ArticlesPage() {
                             onChange={(e) => setStatusFilter(e.target.value)}
                             className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600"
                         >
-                            <option value="all">Semua Status</option>
+                            <option value="all">All Status</option>
                             <option value="published">Published</option>
                             <option value="draft">Draft</option>
                             <option value="review">Review</option>
@@ -255,7 +260,7 @@ export default function ArticlesPage() {
                             onChange={(e) => setCategoryFilter(e.target.value)}
                             className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600"
                         >
-                            <option value="all">Semua Kategori</option>
+                            <option value="all">All Category</option>
                             {categories.map((category: any) => (
                                 <option key={category.id} value={category.id}>
                                     {category.name}
@@ -272,7 +277,7 @@ export default function ArticlesPage() {
                         </select>
 
                         <div className="flex items-center gap-2 text-sm text-gray-600">
-                            Total: <span className="font-semibold">{articles.length}</span> artikel
+                            Total: <span className="font-semibold">{articles.length}</span> articles
                         </div>
                     </div>
                 </div>

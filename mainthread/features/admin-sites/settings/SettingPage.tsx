@@ -1,7 +1,9 @@
 "use client";
 
-import { Facebook, Globe, Instagram, Save, Search, Share2, Twitter, Youtube } from 'lucide-react';
+import { Construction, Facebook, Globe, Instagram, Save, Search, Share2, Twitter, Youtube } from 'lucide-react';
 import { useState } from 'react';
+
+const featureReady = false;
 
 export default function SettingPage() {
     const [isLoading, setIsLoading] = useState(false);
@@ -11,6 +13,17 @@ export default function SettingPage() {
         // Simulate API call
         setTimeout(() => setIsLoading(false), 1000);
     };
+    if (!featureReady) { // FIXME: full screen issue
+        return ( 
+        <div className=" flex-1 flex items-center justify-center h-full w-full bg-slate-50/30">
+            <div className="flex flex-col items-center justify-center p-8 w-full text-center text-slate-500">
+            <Construction className="w-16 h-16 mb-4 text-slate-300" />
+            <h2 className="text-lg font-medium text-slate-900 mb-2">Feature Under Construction</h2>
+            <p className="max-w-md mx-auto">We are currently working on this feature. Please check back later for updates.</p>
+            </div>
+        </div>
+    );
+  }
 
     return (
         <div className="p-6">
