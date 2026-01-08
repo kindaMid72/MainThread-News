@@ -1,18 +1,18 @@
 "use client";
 
-import { ArrowRight, ChevronRight, Clock, Eye, Flame, MessageCircle, Share2, TrendingUp } from "lucide-react";
+import { format } from "date-fns";
+import { ArrowRight, ChevronRight, Clock, Eye, Flame, MessageCircle, Share2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { format } from "date-fns";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 
 // import types
-import { ArticleQuery, CategoriesQuery, TagQuery } from "@/types/Public.type";
+import { ArticleQuery } from "@/types/Public.type";
 
 // utils
-import stringToColor from '@/utils/stringToColor'
-
+import stringToColor from '@/utils/stringToColor';
+import HtmlRenderer from "@/utils/htmlRenderer";
 // components
 import ErrorWithRefreshButton from "@/components/ErrorWithRefreshButton";
 import SkeletonLoading from "./components/SkeletonLoading";
@@ -24,9 +24,6 @@ import api from "@/libs/axiosInterceptor/axiosPublicInterceptor";
 
 export default function LandingPage() {
 
-    const [articles, setArticles] = useState([]);
-    const [error, setError] = useState<any>(null);
-    
     // fetching state
     const [loadingFetch, setLoadingFetch] = useState<boolean>(true);
     const [errorFetch, setErrorFetch] = useState(false);
@@ -35,17 +32,17 @@ export default function LandingPage() {
     const [latestNews, setLatestNews] = useState<ArticleQuery[]>([]);
     const [headline, setHeadline] = useState<ArticleQuery[]>([]);
     const [breakingNews, setBreakingNews] = useState<ArticleQuery[]>([]);
-    const [categories, setCategories] = useState<{id: string, name: string, slug: string, articles: ArticleQuery[]}[]>([]);
+    const [categories, setCategories] = useState<{ id: string, name: string, slug: string, articles: ArticleQuery[] }[]>([]);
     // const [tags, setTags] = useState<TagQuery[]>([]); // used later (maybe)
 
     const fetchContent = async () => {
         try {
             setLoadingFetch(true);
             const response = await api.get("/api/public/get-main-page-content");
-            if(response.status > 201){
+            if (response.status > 201) {
                 throw new Error("Failed to fetch content");
             }
-            
+
             // filter out categories with no article
             const filteredCategories = response.data.categories.filter((category: any) => category.articles.length > 0);
 
@@ -68,10 +65,10 @@ export default function LandingPage() {
         fetchContent();
     }, []);
 
-    if(errorFetch){
+    if (errorFetch) {
         return <ErrorWithRefreshButton onRefresh={fetchContent} />;
     }
-    if(loadingFetch){
+    if (loadingFetch) {
         return <SkeletonLoading />;
     }
 
@@ -90,19 +87,18 @@ export default function LandingPage() {
                                 Breaking News
                             </h3>
                             <div className="flex flex-col gap-4">
-                               {/* TODO: breaking news view with images */}
-                                {breakingNews.map((article, index) => 
-                                    {
-                                        if(index > 1) return null;
-                                        
-                                        return (
-                                            <Link key={article.id} href={`/articles/${article.id}`} className="group flex flex-col h-full bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100">
+                                {/* TODO: breaking news view with images */}
+                                {breakingNews.map((article, index) => {
+                                    if (index > 1) return null;
+
+                                    return (
+                                        <Link key={article.id} href={`/${article.slug}`} className="group flex flex-col h-full bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100">
                                             <div className="relative w-full aspect-video overflow-hidden">
                                                 <Image
                                                     src={article.thumbnail_url as string || ""}
                                                     alt={article.title as string}
                                                     fill
-                                                    className="object-cover group-hover:scale-105 transition-transform duration-500 ease-in-out"
+                                                    className="object-cover"
                                                 />
                                             </div>
                                             <div className="p-4 flex flex-col flex-1">
@@ -112,8 +108,8 @@ export default function LandingPage() {
                                                 </h3>
                                             </div>
                                         </Link>
-                                        )
-                                    }
+                                    )
+                                }
                                 )}
                             </div>
                         </div>
@@ -121,13 +117,13 @@ export default function LandingPage() {
 
                     {/* Center Column: Main Feature */}
                     <div className="col-span-1 lg:col-span-6">
-                        <Link href={`/articles/${headline[0].id}`} className="group block h-full">
-                            <div className="relative w-full aspect-16/10 overflow-hidden rounded-xl shadow-md mb-4">
+                        <Link href={`/${headline[0].slug}`} className="group block h-full">
+                            <div className="relative w-full aspect-16/10 overflow-hidden rounded-xl shadow-md mb-4 group">
                                 <Image
                                     src={headline[0].thumbnail_url as string || ""}
                                     alt={headline[0].title as string || "Unloaded Image"}
                                     fill
-                                    className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                                    className="object-cover"
                                 />
                                 <div className="absolute top-4 left-4 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide">
                                     {categories.find((category) => category.id === headline[0].category_id)?.name}
@@ -143,9 +139,9 @@ export default function LandingPage() {
                                 <h1 className="text-3xl md:text-4xl font-bold text-gray-900 leading-tight group-hover:text-red-700 transition-colors">
                                     {headline[0].title}
                                 </h1>
-                                <p className="text-gray-600 text-lg leading-relaxed line-clamp-3">
-                                    {headline[0].excerpt || (headline[0]?.content_html?.slice(0, 100) + "...")}
-                                </p>
+                                <div className="text-gray-600 text-lg leading-relaxed line-clamp-3">
+                                    {headline[0].excerpt || <HtmlRenderer htmlString={headline[0].content_html as string} />}
+                                </div>
                             </div>
                         </Link>
                     </div>
@@ -159,7 +155,7 @@ export default function LandingPage() {
                             </h3>
                             <div className="flex flex-col gap-6">
                                 {latestNews.map((article, index) => (
-                                    <Link key={article.id as string} href={`${article.id as string}`} className="group flex items-start gap-3">
+                                    <Link key={article.id as string} href={`${article.slug as string}`} className="group flex items-start gap-3">
                                         <span className="text-3xl font-black text-gray-200 leading-none -mt-1 group-hover:text-red-100 transition-colors">
                                             {index + 1}
                                         </span>
@@ -184,14 +180,14 @@ export default function LandingPage() {
 
                 </section>
 
-                {/* === Horizontal Banner / Ad Space / Break === */}
+                {/* === Horizontal Banner / Ad Space / Break ===
                 <div className="w-full h-32 bg-gray-900 rounded-xl my-12 flex items-center justify-center relative overflow-hidden">
                     <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
                     <div className="text-center z-10">
                         <span className="text-gray-400 text-xs uppercase tracking-[0.2em] mb-1 block">Sponsored Content</span>
                         <h3 className="text-2xl font-bold text-white">Subscribe to our Weekly Newsletter</h3>
                     </div>
-                </div>
+                </div> */}
 
                 {/* === Category Sections (Grid Layouts) === */}
                 {categories.map((category) => (
@@ -206,18 +202,18 @@ export default function LandingPage() {
                             </Link>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 group">
                             {category.articles.map((article) => (
-                                <Link key={article.id} href={`/articles/${article.id}`} className="group flex flex-col h-full bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100">
-                                    <div className="relative w-full aspect-video overflow-hidden">
+                                <Link key={article.id} href={`${article.slug}`} className=" group flex flex-col h-full bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 group">
+                                    <div className="relative w-full aspect-video overflow-hidden ">
                                         <Image
                                             src={article.thumbnail_url as string || ""}
                                             alt={article.title as string || "Unloaded Image"}
                                             fill
-                                            className="object-cover group-hover:scale-105 transition-transform duration-500"
+                                            className="object-cover"
                                         />
                                     </div>
-                                    <div className="p-4 flex flex-col flex-1">
+                                    <div className="p-4 flex flex-col flex-1 group">
                                         <div className="text-xs text-gray-400 mb-2">{format(new Date(article.published_at as string), 'dd MMM yyyy')}</div>
                                         <h3 className="font-bold text-gray-900 leading-snug mb-auto group-hover:text-red-700 transition-colors">
                                             {article.title}
