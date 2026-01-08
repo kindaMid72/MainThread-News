@@ -113,7 +113,7 @@ export default function SettingPage() {
                     </div>
                     <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="relative">
-                            <label className="text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+                            <label className="text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">  
                                 <Facebook className="w-4 h-4 text-blue-600" /> Facebook
                             </label>
                             <input

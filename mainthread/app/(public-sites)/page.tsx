@@ -1,6 +1,6 @@
 
 // components
-import PublicNavBar from "@/components/PublicNavBar";
+import LandingPage from "@/features/public-sites/landing-page/LandingPage";
 
 
 export const metadata = {
@@ -9,8 +9,6 @@ export const metadata = {
 }
 export default function Home() {
   return (
-    <div className="flex flex-col min-h-screen items-center justify-start bg-zinc-50 font-sans ">
-      this is main page
-    </div>
+    <LandingPage />
   );
 }
