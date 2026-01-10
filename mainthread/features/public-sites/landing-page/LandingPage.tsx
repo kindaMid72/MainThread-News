@@ -24,9 +24,13 @@ import api from "@/libs/axiosInterceptor/axiosPublicInterceptor";
 
 export default function LandingPage() {
 
+
     // fetching state
     const [loadingFetch, setLoadingFetch] = useState<boolean>(true);
     const [errorFetch, setErrorFetch] = useState(false);
+
+    // temp state
+    const [tempHeadline, setTempHeadline] = useState<string>("");
 
     // data state
     const [latestNews, setLatestNews] = useState<ArticleQuery[]>([]);
@@ -38,6 +42,7 @@ export default function LandingPage() {
     const fetchContent = async () => {
         try {
             setLoadingFetch(true);
+            setErrorFetch(false);
             const response = await api.get("/api/public/get-main-page-content");
             if (response.status > 201) {
                 throw new Error("Failed to fetch content");
@@ -51,6 +56,11 @@ export default function LandingPage() {
             setBreakingNews(response.data.breakingNews);
             setCategories(filteredCategories);
 
+            // set headlines
+            const parsedHeadline = new DOMParser().parseFromString(response.data.headline[0].content_html as string, "text/html");
+            const headlineText = parsedHeadline.querySelector("p")?.textContent || "";
+            setTempHeadline(headlineText);
+
             setErrorFetch(false);
 
         } catch (error) {
@@ -63,6 +73,7 @@ export default function LandingPage() {
     useEffect(() => {
         // TODO: fetch content
         fetchContent();
+        
     }, []);
 
     if (errorFetch) {
@@ -140,7 +151,7 @@ export default function LandingPage() {
                                     {headline[0].title}
                                 </h1>
                                 <div className="text-gray-600 text-lg leading-relaxed line-clamp-3">
-                                    {headline[0].excerpt || <HtmlRenderer htmlString={headline[0].content_html as string} />}
+                                    {tempHeadline}
                                 </div>
                             </div>
                         </Link>
@@ -218,10 +229,6 @@ export default function LandingPage() {
                                         <h3 className="font-bold text-gray-900 leading-snug mb-auto group-hover:text-red-700 transition-colors">
                                             {article.title}
                                         </h3>
-                                        <div className="mt-4 flex items-center justify-between pt-4 border-t border-gray-50 text-gray-400">
-                                            <button className="hover:text-gray-600 transition-colors"><Share2 className="w-4 h-4" /></button>
-                                            <button className="hover:text-gray-600 transition-colors"><MessageCircle className="w-4 h-4" /></button>
-                                        </div>
                                     </div>
                                 </Link>
                             ))}

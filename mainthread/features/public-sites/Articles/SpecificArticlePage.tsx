@@ -1,6 +1,8 @@
+
 // types
 import { ArticleQuery } from "@/types/Article.type";
 import { format } from "date-fns";
+import { FileQuestion } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -13,6 +15,25 @@ interface Props {
 }
 
 export default function SpecificArticlePage({ article, relatedArticles }: Props) {
+    if (!article) {
+        return (
+            <div className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4">
+                <div className="bg-gray-100 p-4 rounded-full mb-6">
+                    <FileQuestion className="w-12 h-12 text-gray-400" />
+                </div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">Article Not Found</h1>
+                <p className="text-gray-500 mb-8 max-w-md">
+                    The article you are looking for might have been removed, had its name changed, or is temporarily unavailable.
+                </p>
+                <Link
+                    href="/"
+                    className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+                >
+                    Go Back Home
+                </Link>
+            </div>
+        )
+    }
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -52,8 +73,8 @@ export default function SpecificArticlePage({ article, relatedArticles }: Props)
                     </div>
 
                     {/* Article Content */}
-                    <article className="prose prose-lg prose-blue max-w-none text-lg! font-normal! text-gray-800 leading-relaxed">
-                        <HtmlRenderer htmlString={article.content_html as string || ""} />
+                    <article className="max-w-none">
+                        <HtmlRenderer className="prose prose-lg prose-blue max-w-none text-lg text-gray-800 leading-loose prose-p:mb-6 prose-headings:font-bold prose-headings:text-gray-900 prose-a:text-blue-600 hover:prose-a:text-blue-500 prose-img:rounded-xl [&_p]:mb-4 [&_img]:my-4 [&_img]:w-full [&_img]:h-auto [&_img]:object-cover" htmlString={article.content_html as string || ""} />
                     </article>
                 </div>
 

@@ -200,7 +200,8 @@ router.post('/upload-image/:articleId', upload.single('file'),  async (req, res)
             entityId: imageUrl as string,
             entityType: 'image',
             metadata: {
-                imageUrl: imageUrl as string
+                imageUrl: imageUrl as string,
+                articleId: articleId as string
             }
         });
 

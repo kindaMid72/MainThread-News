@@ -32,7 +32,7 @@ export default function ArticlesPage() {
     const [statusFilter, setStatusFilter] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('');
-    const [ascFilter, setAscFilter] = useState('asc');
+    const [ascFilter, setAscFilter] = useState('desc');
 
     // ui state
     const [isLoadingFetch, setIsLoadingFetch] = useState(true);
@@ -272,8 +272,8 @@ export default function ArticlesPage() {
                             onChange={(e) => setAscFilter(e.target.value)}
                             className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600"
                         >
-                            <option value="asc">Newest</option>
-                            <option value="desc">Oldest</option>
+                            <option value="desc">Newest</option>
+                            <option value="asc">Oldest</option>
                         </select>
 
                         <div className="flex items-center gap-2 text-sm text-gray-600">

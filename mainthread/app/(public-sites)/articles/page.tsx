@@ -1,3 +1,4 @@
+import AllArticlePage from "@/features/public-sites/all-article/AllArticlePage";
 
 export const metadata = {
     title: "All Articles",
@@ -5,8 +6,6 @@ export const metadata = {
 }
 export default function AllArticles() {
     return (
-        <div>
-            <h1>All Articles</h1>
-        </div>
+        <AllArticlePage />
     );
 }
