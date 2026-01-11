@@ -1,7 +1,7 @@
 "use client";
 
 import { format } from "date-fns";
-import { ArrowRight, ChevronRight, Clock, Eye, Flame, MessageCircle, Share2 } from "lucide-react";
+import { ArrowRight, ChevronRight, Clock, Eye, Flame, Mail} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -94,7 +94,7 @@ export default function LandingPage() {
                     <div className="hidden lg:block lg:col-span-3 space-y-6">
                         <div className="border-t-4 border-black pt-4">
                             <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                                <Flame className="w-5 h-5 text-gray-500" />
+                                <Flame className="w-5 h-5 text-red-500" />
                                 Breaking News
                             </h3>
                             <div className="flex flex-col gap-4">
@@ -161,7 +161,7 @@ export default function LandingPage() {
                     <div className="col-span-1 lg:col-span-3">
                         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-full">
                             <h3 className="font-bold text-xl mb-6 flex items-center gap-2 pb-4 border-b border-gray-100">
-                                <Clock className="w-6 h-6 text-red-600" />
+                                <Clock className="w-6 h-6 text-gray-600" />
                                 Latest News
                             </h3>
                             <div className="flex flex-col gap-6">
@@ -183,9 +183,9 @@ export default function LandingPage() {
                                     </Link>
                                 ))}
                             </div>
-                            <button className="w-full mt-8 py-2 text-sm font-semibold text-gray-600 hover:text-red-700 border border-gray-200 rounded-lg hover:border-red-200 transition-all flex items-center justify-center gap-2">
+                            <Link href="/articles" className="w-full mt-8 py-2 text-sm font-semibold text-gray-600 hover:text-red-700 border border-gray-200 rounded-lg hover:border-red-200 transition-all flex items-center justify-center gap-2">
                                 View All News <ChevronRight className="w-4 h-4" />
-                            </button>
+                            </Link>
                         </div>
                     </div>
 
@@ -208,7 +208,7 @@ export default function LandingPage() {
                                 <span className={`w-2 h-8 rounded-full bg-[${stringToColor(category.name)}]`}></span>
                                 Latest in {category.name}
                             </h2>
-                            <Link href={`/categories/${category.name.toLowerCase()}`} className="text-sm font-medium text-gray-500 hover:text-red-600 flex items-center gap-1 transition-colors">
+                            <Link href={`/categories/${category.slug}`} className="text-sm font-medium text-gray-500 hover:text-red-600 flex items-center gap-1 transition-colors">
                                 View More <ArrowRight className="w-4 h-4" />
                             </Link>
                         </div>
@@ -235,6 +235,24 @@ export default function LandingPage() {
                         </div>
                     </section>
                 ))}
+                {/* Contact & Footer */}
+                <section className="border-t border-gray-200 pt-12 text-center">
+                    <h2 className="text-xl font-bold text-gray-900 mb-6">Get in Touch</h2>
+                    <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 text-gray-600 font-medium">
+                        <Link href="mailto:kingahmadilyas05@gmail.com" className="flex items-center gap-2 hover:text-black transition-colors">
+                            <Mail className="w-5 h-5" />
+                            kingahmadilyas05@gmail.com
+                        </Link>
+                        {/* <span className="hidden sm:inline text-gray-300">|</span>
+                        <Link href="/privacy" className="hover:text-black transition-colors">
+                            Privacy Policy
+                        </Link>
+                        <span className="hidden sm:inline text-gray-300">|</span>
+                        <Link href="/terms" className="hover:text-black transition-colors">
+                            Terms of Service
+                        </Link> */}
+                    </div>
+                </section>
 
             </main>
         </div>

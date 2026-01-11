@@ -1,8 +1,8 @@
 
+import AboutPage from "@/features/public-sites/about/AboutPage";
+
 export default function About() {
     return (
-        <div>
-            <h1>About</h1>
-        </div>
+        <AboutPage />
     );
 }

@@ -82,11 +82,44 @@ export async function getArticleContent(slug: string) {
     }
 }
 
-export async function getAllArticles(page: number, limit: number) {
+export async function getAllArticles(page: number, limit: number, category_slug?: string) {
     try {
         const db = await dbAccess();
         const from = (page - 1) * limit;
         const to = from + limit - 1;
+
+
+        if(category_slug) {
+            // get id based on category name
+            const {data: category_id, error: categoryError} = await db.from('categories').select('id').eq('slug', category_slug).single();
+            if (categoryError) {
+                console.log('error from public repository getAllArticles: ', categoryError);
+                throw categoryError;
+            }
+
+            const { data: articles, count, error }= await db
+                .from('articles')
+                .select('*', { count: 'exact' })
+                .eq('status', 'published')
+                .eq('category_id', category_id.id)
+                .order('published_at', { ascending: false })
+                .range(from, to);
+
+            // get name of the author
+            if(articles) {
+                const { data: users, error: usersError } = await db.from('users_access').select('user_id, name').in('user_id', articles.map(a => a.author_id));
+                articles.forEach(article => {
+                    article.author_id = users?.find((user) => user.user_id === article.author_id)?.name;
+                });
+            }
+
+            if (error) {
+                console.log('error from public repository getAllArticles: ', error);
+                throw error;
+            }
+
+            return { articles, count };
+        }
 
         const { data: articles, count, error } = await db
             .from('articles')
@@ -94,6 +127,7 @@ export async function getAllArticles(page: number, limit: number) {
             .eq('status', 'published')
             .order('published_at', { ascending: false })
             .range(from, to);
+
 
         if (error) {
             console.log('error from public repository getAllArticles: ', error);

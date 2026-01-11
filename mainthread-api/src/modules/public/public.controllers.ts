@@ -4,7 +4,7 @@ import express from "express";
 import { ArticleQuery } from "./public.types";
 
 // services
-import { getAllArticlesService, getArticleContentService, getCategoryArticlesService, getMainPageContentService } from "./public.services";
+import { getAllArticlesService, getArticleContentService, getCategoryArticlesService, getMainPageContentService, getAllCategoriesService } from "./public.services";
 
 const router = express.Router();
 
@@ -67,6 +67,22 @@ router.get('/get-all-articles', async (req, res) => { // TODO: implement paginat
         return res.status(200).json(result);
     } catch (error) {
         console.log('error from public controller /get-all-articles: ', error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+});
+
+router.get('/get-all-categories/:categorySlug', async (req, res) => {
+    try {
+
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 12;
+        const category_slug = req.params.categorySlug as string;
+        console.log('category_slug: ', category_slug);
+
+        const categories = await getAllCategoriesService(page, limit, category_slug);
+        return res.status(200).json(categories);
+    } catch (error) {
+        console.log('error from public controller /get-all-categories: ', error);
         return res.status(500).json({ message: "Internal Server Error" });
     }
 });

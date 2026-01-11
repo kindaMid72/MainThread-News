@@ -67,3 +67,17 @@ export async function getAllArticlesService(page: number, limit: number) {
         throw error;
     }
 }
+
+export async function getAllCategoriesService(page: number, limit: number, category_slug?: string) {
+    try {
+        if(category_slug) {
+            const { articles, count } = await getAllArticles(page, limit, category_slug);
+            return { articles, count };
+        }
+        const { articles, count } = await getAllArticles(page, limit);
+        return { articles, count };
+    } catch (error) {
+        console.log('error from public service getAllCategoriesService: ', error);
+        throw error;
+    }
+}

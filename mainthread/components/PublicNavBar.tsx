@@ -22,10 +22,10 @@ export default function PublicNavBar() {
 
     // navigation items
     const navItems = [// landing page (no route), about, all article, contact,  
+        { name: 'About', path: 'about', icon: 'fa-info-circle' },
         { name: 'Thread', path: '', icon: 'fa-chart-line' },
         { name: 'Articles', path: 'articles', icon: 'fa-newspaper' },
-        { name: 'About', path: 'about', icon: 'fa-info-circle' },
-        { name: 'Contact', path: 'contact', icon: 'fa-envelope' },
+        // { name: 'Contact', path: 'contact', icon: 'fa-envelope' },
     ];
 
     // active/inactive styles (White Theme)

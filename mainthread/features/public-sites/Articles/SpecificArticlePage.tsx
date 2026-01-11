@@ -52,7 +52,7 @@ export default function SpecificArticlePage({ article, relatedArticles }: Props)
                     </div>
 
                     {/* Article Header */}
-                    <div className="mb-8 border-b border-gray-100 pb-8">
+                    <div className="mb-8 border-b-2 border-gray-500 pb-8">
                         <div className="flex items-center gap-2 text-sm text-blue-600 font-semibold mb-3 uppercase tracking-wider">
                             {/* You might want to pass category name here if available, or fetch it */}
                             <span>Article</span>
