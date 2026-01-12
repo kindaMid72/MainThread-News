@@ -64,7 +64,7 @@ export default function AllArticlePage() {
     };
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 min-h-screen">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 min-h-screen font-sans! ">
             <h1 className="text-4xl font-bold text-gray-900 mb-12">All Articles</h1>
 
             {loading ? (

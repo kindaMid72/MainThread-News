@@ -56,7 +56,7 @@ export default function PublicNavBar() {
     const isActive = (path: string) => pathname === `/${path}`;
 
     return (
-        <nav className='sticky flex flex-col top-0 z-50 w-full bg-white border-b border-gray-200 shadow-[0px_0px_20px_rgba(0,0,0,0.1)]'>
+        <nav className='sticky font-sans flex flex-col top-0 z-50 w-full bg-white border-b border-gray-200 shadow-[0px_0px_20px_rgba(0,0,0,0.1)]'>
 
             {showSearch && (
                 <div >
@@ -92,12 +92,12 @@ export default function PublicNavBar() {
                 <div className='flex justify-between h-16'>
                     <div className='flex justify-center'>
                         {/* Desktop Menu Items (Horizontal) */}
-                        <div className='hidden lg:ml-10 lg:flex lg:space-x-8 min-h-16'>
+                        <div className='hidden lg:ml-10 lg:flex lg:space-x-8 min-h-16 font-bold '>
                             {navItems.map((item) => (
                                 <button
                                     key={item.path}
                                     onClick={() => handleNavigate(item.path)}
-                                    className={`inline-flex items-center px-3 pt-1 cursor-pointer border-b-3 text-sm font-medium transition-colors duration-200 ${isActive(item.path)
+                                    className={`inline-flex items-center px-3 pt-1 cursor-pointer border-b-3 text-lg font-medium transition-colors duration-200 ${isActive(item.path)
                                             ? 'border-red-800 text-blue-900'
                                             : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
                                         }`}

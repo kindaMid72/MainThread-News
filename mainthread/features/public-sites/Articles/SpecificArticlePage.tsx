@@ -36,7 +36,7 @@ export default function SpecificArticlePage({ article, relatedArticles }: Props)
     }
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 font-sans!">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
                 {/* Main Content Column */}
                 <div className="lg:col-span-8">
@@ -74,7 +74,7 @@ export default function SpecificArticlePage({ article, relatedArticles }: Props)
 
                     {/* Article Content */}
                     <article className="max-w-none">
-                        <HtmlRenderer className="prose prose-lg prose-blue max-w-none text-lg text-gray-800 leading-loose prose-p:mb-6 prose-headings:font-bold prose-headings:text-gray-900 prose-a:text-blue-600 hover:prose-a:text-blue-500 prose-img:rounded-xl [&_p]:mb-4 [&_img]:my-4 [&_img]:w-full [&_img]:h-auto [&_img]:object-cover" htmlString={article.content_html as string || ""} />
+                        <HtmlRenderer className="prose prose-lg prose-blue max-w-none text-xl text-gray-800 leading-loose prose-p:mb-6 prose-headings:font-bold prose-headings:text-gray-900 prose-a:text-blue-600 hover:prose-a:text-blue-500 prose-img:rounded-xl [&_p]:mb-4 [&_img]:my-4 [&_img]:w-full [&_img]:h-auto [&_img]:object-cover" htmlString={article.content_html as string || ""} />
                     </article>
                 </div>
 
