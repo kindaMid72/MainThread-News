@@ -7,14 +7,17 @@ import { TagQuery, Tag } from '../tags/tags.types';
 
 import {REDIS_KEY} from '../../const/const.redis'
 
+// utils
+import generateRandomToken from '../../utils/generator/generateRandomToken';
+
 export async function createArticleReturnId({authorId}: {authorId: string}) : Promise<string>{
     try {
         const db = await dbAccess();
         const value : ArticleQuery = {
             title: '',
-            slug: '',
+            slug: await generateRandomToken(),
             excerpt: null,
-            content_html: '<p>I like reading manhwas, the last manhwa I read is kinda touching, one of the best romance manhwa i ever read</p>',
+            content_html: '<p></p>',
             thumbnail_url: '',
             category_id: null,
             author_id: authorId,
@@ -289,6 +292,7 @@ export async function updateArticle(id: string, updates: Partial<ArticleQuery>):
             .from('articles')
             .update({
                 ...updates,
+                published_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
             })
             .eq('id', id);
