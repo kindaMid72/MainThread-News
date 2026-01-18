@@ -6,6 +6,16 @@ import api from '@/libs/axiosInterceptor/axiosPublicInterceptor';
 
 import { cache } from 'react';
 
+import { ArticleQuery } from "@/types/Public.type";
+interface MainResponse {
+    data: {
+        latestNews: ArticleQuery[];
+        headline: ArticleQuery[];
+        breakingNews: ArticleQuery[];
+        categories: {id: string, name: string, slug: string, articles: ArticleQuery[]}[];
+    }
+}
+
 const fetchArticles = cache(async function fetchArticles() {
   try {
     const response = await api.get("/api/public/get-main-page-content");
@@ -26,10 +36,10 @@ export const metadata = {
 export default async function Home() {
 
   try {
-    const response = await fetchArticles();
+    const response: MainResponse | null = await fetchArticles();
     // pass till here
     return (
-      <LandingPage response={response} />
+      <LandingPage response={response as MainResponse} />
     );
   } catch (error) {
     console.error("Failed to fetch articles", error);

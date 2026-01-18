@@ -12,14 +12,6 @@ import { ArticleQuery } from "@/types/Public.type";
 
 // utils
 import stringToColor from '@/utils/stringToColor';
-import HtmlRenderer from "@/utils/htmlRenderer";
-// components
-import ErrorWithRefreshButton from "@/components/ErrorWithRefreshButton";
-import SkeletonLoading from "./components/SkeletonLoading";
-
-// api 
-import api from "@/libs/axiosInterceptor/axiosPublicInterceptor";
-
 // --- Mock Data ---
 
 

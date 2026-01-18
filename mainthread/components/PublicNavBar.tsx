@@ -24,7 +24,7 @@ export default function PublicNavBar() {
     const navItems = [// landing page (no route), about, all article, contact,  
         { name: 'About', path: 'about', icon: 'fa-info-circle' },
         { name: 'Thread', path: '', icon: 'fa-chart-line' },
-        { name: 'Articles', path: 'articles', icon: 'fa-newspaper' },
+        { name: 'Articles', path: 'articles?page=1&limit=10', icon: 'fa-newspaper' },
         // { name: 'Contact', path: 'contact', icon: 'fa-envelope' },
     ];
 
@@ -53,7 +53,13 @@ export default function PublicNavBar() {
         };
     }, [inputSearchRef.current]);
 
-    const isActive = (path: string) => pathname === `/${path}`;
+    const isActive = (path: string) => {
+        // iterate through all possible path page, and return true if the path is matching
+        if(path.includes('articles')){
+            return pathname.includes('articles');
+        }
+        return pathname === `/${path}`;
+    };
 
     return (
         <nav className='sticky font-sans flex flex-col top-0 z-50 w-full bg-white border-b border-gray-200 shadow-[0px_0px_20px_rgba(0,0,0,0.1)]'>

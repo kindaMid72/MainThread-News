@@ -1,37 +1,19 @@
-"use client";
+
 
 import api from "@/libs/axiosInterceptor/axiosPublicInterceptor";
 import { ArticleQuery } from "@/types/Public.type";
 import { format } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { redirect } from "next/navigation";
 
-export default function AllArticlePage() {
-    const [loading, setLoading] = useState(true);
-    const [articles, setArticles] = useState<ArticleQuery[]>([]);
-    const [totalCount, setTotalCount] = useState(0);
-    const [currentPage, setCurrentPage] = useState(1);
-    const limit = 12;
+// components
+import Button from './components/button';
 
-    const fetchArticles = async (page: number) => {
-        try {
-            setLoading(true);
-            const response = await api.get(`/api/public/get-all-articles?page=${page}&limit=${limit}`);
-            if (response.status === 200) {
-                setArticles(response.data.articles);
-                setTotalCount(response.data.count);
-            }
-        } catch (error) {
-            console.error("Failed to fetch articles", error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchArticles(currentPage);
-    }, [currentPage]);
+export default function AllArticlePage({response, page, limit}: {response: any, page: number, limit: number}) {
+    const articles: ArticleQuery[] = response.articles;
+    const totalCount = response.count;
+    const currentPage = page;
 
     // Group articles by Month Year
     const groupedArticles = articles.reduce((acc, article) => {
@@ -46,6 +28,10 @@ export default function AllArticlePage() {
         return acc;
     }, {} as Record<string, ArticleQuery[]>);
 
+    if(Object.keys(groupedArticles).length === 0) {
+        return <div>No articles found</div>
+    }
+
     // Sort groups - The query already returns sorted desc, but we iterate reliably just in case
     // Since Object.entries might not guarantee order of insertion (though mostly yes for string keys),
     // and our data is sorted desc, the first key encountered is likely the newest month.
@@ -54,12 +40,13 @@ export default function AllArticlePage() {
     // Since we process `articles` (sorted desc) from start to end, we insert "January 2025" then "December 2024", etc.
     // So iterating keys should be fine.
 
-    const totalPages = Math.ceil(totalCount / limit);
+    const totalPages = Math.ceil(totalCount / limit); // FIXME: kenapa ini bisa NaN?
+    // console.log(limit); // FIXME: limit nan
 
     const handlePageChange = (newPage: number) => {
         if (newPage >= 1 && newPage <= totalPages) {
-            setCurrentPage(newPage);
             window.scrollTo({ top: 0, behavior: 'smooth' });
+            redirect(`/articles?page=${newPage}&limit=${limit}`)
         }
     };
 
@@ -67,7 +54,7 @@ export default function AllArticlePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 min-h-screen font-sans! ">
             <h1 className="text-4xl font-bold text-gray-900 mb-12">All Articles</h1>
 
-            {loading ? (
+            {false ? (
                 // Simple skeleton
                 <div className="space-y-12">
                     {[1, 2].map((i) => (
@@ -116,15 +103,17 @@ export default function AllArticlePage() {
             )}
 
             {/* Pagination */}
-            {!loading && totalPages > 1 && (
+            {totalPages > 1 && (
                 <div className="mt-16 flex justify-center items-center gap-2">
-                    <button
-                        onClick={() => handlePageChange(currentPage - 1)}
+                    <Button
+                        page={currentPage - 1}
+                        content={<ChevronLeft className="w-5 h-5" />}
                         disabled={currentPage === 1}
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        limit={limit}
                         className="p-2 border rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-gray-600"
-                    >
-                        <ChevronLeft className="w-5 h-5" />
-                    </button>
+                    />
 
                     {/* Page Numbers */}
                     {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
@@ -138,28 +127,30 @@ export default function AllArticlePage() {
                             (page >= currentPage - 1 && page <= currentPage + 1)
                         ) {
                             return (
-                                <button
+                                <Button
                                     key={page}
-                                    onClick={() => handlePageChange(page)}
-                                    className={`w-10 h-10 flex items-center justify-center rounded-md border text-sm font-medium transition-colors ${currentPage === page
-                                            ? "bg-black text-white border-black"
-                                            : "bg-white text-gray-700 hover:bg-gray-50 border-gray-200"
-                                        }`}
-                                >
-                                    {page}
-                                </button>
+                                    page={page}
+                                    content={page}
+                                    disabled={page === currentPage}
+                                    currentPage={currentPage}
+                                    totalPages={totalPages}
+                                    limit={limit}
+                                    className="w-10 h-10 flex items-center justify-center rounded-md border text-sm font-medium transition-colors"
+                                />
                             );
                         }
                         return null;
                     })}
 
-                    <button
-                        onClick={() => handlePageChange(currentPage + 1)}
+                    <Button
+                        page={currentPage + 1}
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        limit={limit}
                         disabled={currentPage === totalPages}
+                        content={<ChevronRight className="w-5 h-5" />}
                         className="p-2 border rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-gray-600"
-                    >
-                        <ChevronRight className="w-5 h-5" />
-                    </button>
+                    />
                 </div>
             )}
         </div>
