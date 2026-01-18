@@ -1,11 +1,11 @@
-"use client";
+"use client"
 
 import { format } from "date-fns";
 import { ArrowRight, ChevronRight, Clock, Eye, Flame, Mail} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 // import types
 import { ArticleQuery } from "@/types/Public.type";
@@ -22,66 +22,31 @@ import api from "@/libs/axiosInterceptor/axiosPublicInterceptor";
 
 // --- Mock Data ---
 
-export default function LandingPage() {
+
+interface MainResponse {
+    data: {
+        latestNews: ArticleQuery[];
+        headline: ArticleQuery[];
+        breakingNews: ArticleQuery[];
+        categories: {id: string, name: string, slug: string, articles: ArticleQuery[]}[];
+    }
+}
+
+export default function LandingPage({response}: {response: MainResponse}) {
 
 
     // fetching state
-    const [loadingFetch, setLoadingFetch] = useState<boolean>(true);
-    const [errorFetch, setErrorFetch] = useState(false);
 
     // temp state
-    const [tempHeadline, setTempHeadline] = useState<string>("");
-
+    
     // data state
-    const [latestNews, setLatestNews] = useState<ArticleQuery[]>([]);
-    const [headline, setHeadline] = useState<ArticleQuery[]>([]);
-    const [breakingNews, setBreakingNews] = useState<ArticleQuery[]>([]);
-    const [categories, setCategories] = useState<{ id: string, name: string, slug: string, articles: ArticleQuery[] }[]>([]);
-    // const [tags, setTags] = useState<TagQuery[]>([]); // used later (maybe)
+    const latestNews: ArticleQuery[] = response.data.latestNews;
+    const headline: ArticleQuery[] = response.data.headline;
+    const breakingNews: ArticleQuery[] = response.data.breakingNews;
+    const tempHeadline = response.data.headline[0].content_html;
 
-    const fetchContent = async () => {
-        try {
-            setLoadingFetch(true);
-            setErrorFetch(false);
-            const response = await api.get("/api/public/get-main-page-content");
-            if (response.status > 201) {
-                throw new Error("Failed to fetch content");
-            }
-
-            // filter out categories with no article
-            const filteredCategories = response.data.categories.filter((category: any) => category.articles.length > 0);
-
-            setLatestNews(response.data.latestNews);
-            setHeadline(response.data.headline);
-            setBreakingNews(response.data.breakingNews);
-            setCategories(filteredCategories);
-
-            // set headlines
-            const parsedHeadline = new DOMParser().parseFromString(response.data.headline[0].content_html as string, "text/html");
-            const headlineText = parsedHeadline.querySelector("p")?.textContent || "";
-            setTempHeadline(headlineText);
-
-            setErrorFetch(false);
-
-        } catch (error) {
-            setErrorFetch(true);
-        } finally {
-            setLoadingFetch(false);
-        }
-    };
-
-    useEffect(() => {
-        // TODO: fetch content
-        fetchContent();
-        
-    }, []);
-
-    if (errorFetch) {
-        return <ErrorWithRefreshButton onRefresh={fetchContent} />;
-    }
-    if (loadingFetch) {
-        return <SkeletonLoading />;
-    }
+    const filteredCategories = response.data.categories.filter((category: any) => category.articles.length > 0);
+    const categories = filteredCategories;
 
     return (
         <div className="min-h-screen bg-zinc-50 font-sans text-gray-900 pb-20 px-4">
@@ -208,7 +173,7 @@ export default function LandingPage() {
                                 <span className={`w-2 h-8 rounded-full bg-[${stringToColor(category.name)}]`}></span>
                                 Latest in {category.name}
                             </h2>
-                            <Link href={`/categories/${category.slug}`} className="text-sm font-medium text-gray-500 hover:text-red-600 flex items-center gap-1 transition-colors">
+                            <Link href={`/categories/${category?.slug}`} className="text-sm font-medium text-gray-500 hover:text-red-600 flex items-center gap-1 transition-colors">
                                 View More <ArrowRight className="w-4 h-4" />
                             </Link>
                         </div>

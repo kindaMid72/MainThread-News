@@ -1,4 +1,3 @@
-
 // types
 import { ArticleQuery } from "@/types/Article.type";
 import { format } from "date-fns";
@@ -45,8 +44,10 @@ export default function SpecificArticlePage({ article, relatedArticles }: Props)
                         <Image
                             src={article.thumbnail_url as string || "https://via.placeholder.com/800x450"}
                             alt={article.title as string || "Article Image"}
-                            fill
-                            className="object-cover"
+                            width={800}
+                            height={450}
+                            
+                            className="object-cover w-full h-full"
                             priority
                         />
                     </div>
