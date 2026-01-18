@@ -165,7 +165,7 @@ export default function LandingPage({response}: {response: MainResponse}) {
                                 <span className={`w-2 h-8 rounded-full bg-[${stringToColor(category.name)}]`}></span>
                                 Latest in {category.name}
                             </h2>
-                            <Link href={`/categories/${category?.slug}`} className="text-sm font-medium text-gray-500 hover:text-red-600 flex items-center gap-1 transition-colors">
+                            <Link href={`/categories/${category?.slug}?page=1&limit=10`} className="text-sm font-medium text-gray-500 hover:text-red-600 flex items-center gap-1 transition-colors">
                                 View More <ArrowRight className="w-4 h-4" />
                             </Link>
                         </div>
