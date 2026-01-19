@@ -148,3 +148,30 @@ export async function getAllArticles(page: number, limit: number, category_slug?
         throw error;
     }
 }
+
+export async function searchArticles({query, page, limit}: {query: string, page: number, limit: number}) {
+    try {
+        const db = await dbAccess();
+        const from = (page - 1) * limit;
+        const to = from + limit - 1;
+
+        let { data: articles, error: articlesError }: { data: ArticleQuery[] | null, error: any } = await db.from('articles').select('id, title, published_at, slug, author_id, thumbnail_url').eq('status', 'published').ilike('title', `%${query}%`).range(from, to);
+
+        // get name of author
+        if(articles){
+            const { data: users, error: usersError }: { data: any[] | null, error: any } = await db.from('users_access').select('user_id, name').in('user_id', articles?.map(a => a.author_id));
+            articles?.forEach(article => {
+                article.author_id = users?.find((user) => user.user_id === article.author_id)?.name;
+            });
+        }
+
+
+        if (articlesError) {
+            console.log('error from public repository searchArticles: ', articlesError);
+            throw articlesError;
+        }
+        return articles;
+    } catch (error) {
+        throw error;
+    }
+}

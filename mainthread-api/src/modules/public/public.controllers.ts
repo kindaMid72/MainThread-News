@@ -4,7 +4,7 @@ import express from "express";
 import { ArticleQuery } from "./public.types";
 
 // services
-import { getAllArticlesService, getArticleContentService, getCategoryArticlesService, getMainPageContentService, getAllCategoriesService } from "./public.services";
+import { getAllArticlesService, getArticleContentService, getCategoryArticlesService, getMainPageContentService, getAllCategoriesService, searchArticlesService } from "./public.services";
 
 const router = express.Router();
 
@@ -86,5 +86,18 @@ router.get('/get-all-categories/:categorySlug', async (req, res) => {
         return res.status(500).json({ message: "Internal Server Error" });
     }
 });
+
+router.get('/search', async (req, res) => {
+    try {
+        const query = req.query.query as string;
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 12;
+        const articles = await searchArticlesService({query, page, limit});
+        return res.status(200).json(articles);
+    } catch (error) {
+        console.log('error from public controller /search: ', error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+})
 
 export default router;

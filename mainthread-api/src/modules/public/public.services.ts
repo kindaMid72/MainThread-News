@@ -3,7 +3,7 @@
 import { ArticleQuery } from "./public.types";
 
 // repositories
-import { getAllArticles, getArticleContent, getCategoriesArticles, getMainPageContent } from "./public.repositories";
+import { getAllArticles, getArticleContent, searchArticles, getCategoriesArticles, getMainPageContent } from "./public.repositories";
 
 export async function getMainPageContentService(): Promise<{ latestNews: ArticleQuery[], headline: ArticleQuery[], breakingNews: ArticleQuery[], categories: any[] } | undefined> {
     try {
@@ -78,6 +78,16 @@ export async function getAllCategoriesService(page: number, limit: number, categ
         return { articles, count };
     } catch (error) {
         console.log('error from public service getAllCategoriesService: ', error);
+        throw error;
+    }
+}
+
+export async function searchArticlesService({query, page, limit}: {query: string, page: number, limit: number}) {
+    try {
+        const articles = await searchArticles({query, page, limit});
+        return articles;
+    } catch (error) {
+        console.log('error from public service searchArticlesService: ', error);
         throw error;
     }
 }
