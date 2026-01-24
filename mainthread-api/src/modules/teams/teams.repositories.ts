@@ -6,9 +6,6 @@ import redis from "../../config/redis/createRedisAccess";
 import { TeamMember, TeamMemberQuery, TeamMemberCreate, UserInvite } from "./teams.types";
 import { REDIS_KEY } from "../../const/const.redis";
 
-// libs
-import bcrypt from 'bcrypt';
-
 export async function getAllUser() {
     // create db access
     const dbAccess = await createDatabaseAccess();

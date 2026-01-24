@@ -1,10 +1,13 @@
 "use client"
 import { useParams, usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
+import createBrowserClient from '@/libs/supabase/createBrowserClient';
 /**
  * 
  * FIXME: awesome icon didnt shown
  */
+
+import PopUpMessageCard from './PopUpMessage';
 
 export default function NavBar() {
     const router = useRouter();
@@ -12,8 +15,19 @@ export default function NavBar() {
     const pathname = usePathname();
     const { userId } = params;
 
+
+
     // state
     const [showSidebar, setShowSidebar] = useState<boolean>(false);
+    const [showPopUp, setShowPopUp] = useState<boolean>(false);
+
+    const [PopUpMessage, setPopUpMessage] = useState<{title: string, message: string, type: string, duration: number, onClose: () => void}>({
+        title: '',
+        message: '',
+        type: 'success',
+        duration: 3000,
+        onClose: () => setShowPopUp(false),
+    });
 
     // navigation items
     const navItems = [
@@ -34,10 +48,39 @@ export default function NavBar() {
         setShowSidebar(false); // Close sidebar on mobile select
     };
 
+    const handleLogout = async () => {
+        // supabase logout
+        const supabase = await createBrowserClient();
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+            setPopUpMessage({
+                title: 'Error',
+                message: error.message,
+                type: 'error',
+                duration: 3000,
+                onClose: () => setShowPopUp(false),
+            });
+
+            return;
+        }
+        router.push('/login');
+    }
+
     const isActive = (path: string) => pathname.includes(path);
+
+    
 
     return (
         <nav className='sticky top-0 z-50 w-full bg-white border-b border-gray-200 shadow-[0px_0px_20px_rgba(0,0,0,0.1)]'>
+            {showPopUp && (
+                <PopUpMessageCard
+                    title={PopUpMessage.title}
+                    message={PopUpMessage.message}
+                    type={PopUpMessage.type}
+                    duration={PopUpMessage.duration}
+                    onClose={PopUpMessage.onClose}
+                />
+            )}
             <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
                 <div className='flex justify-between h-16'>
 
@@ -74,7 +117,7 @@ export default function NavBar() {
                     {/* Right Side: Profile / Logout */}
                     <div className='flex items-center'>
                         <button
-                            onClick={() => router.push('/')}
+                            onClick={handleLogout}
                             className='hidden cursor-pointer lg:flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-600 bg-white hover:bg-red-50 focus:outline-none transition'
                         >   
                             <p>Logout</p>

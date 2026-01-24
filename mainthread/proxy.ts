@@ -51,20 +51,23 @@ export async function proxy(request: any) {
         const publicRoutes = [
             '/',
             '/login',
-            '/error',
+            '/articles',
             '/home',
-            '/About',
-            '/Features', // TODO: add more if routes added
+            '/about',
+        ];
+
+        const protectedRoutes = [
+            '/admin',
         ];
 
         // Cek apakah URL diawali dengan publicRoutes
-        const isPublicRoute = publicRoutes.some(path =>
+        const isProtectedRoute = protectedRoutes.some(path =>
             request.nextUrl.pathname === path ||
             (path !== '/' && request.nextUrl.pathname.startsWith(path))
         );
 
         // Jika user TIDAK login dan BUKAN rute publik -> Redirect ke Login
-        if (!user && !isPublicRoute) {
+        if (!user && isProtectedRoute) {
             const url = request.nextUrl.clone()
             url.pathname = '/login'
             return NextResponse.redirect(url)

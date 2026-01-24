@@ -148,3 +148,136 @@ export async function getAllArticles(page: number, limit: number, category_slug?
         throw error;
     }
 }
+
+export async function searchArticles({ query, page, limit }: { query: string, page: number, limit: number }) {
+    try {
+        const db = await dbAccess();
+        const from = (page - 1) * limit;
+        const to = from + limit - 1;
+
+        let { data: articles, error: articlesError }: { data: ArticleQuery[] | null, error: any } = await db.from('articles').select('id, title, published_at, slug, author_id, thumbnail_url').eq('status', 'published').ilike('title', `%${query}%`).range(from, to);
+
+        // get name of author
+        if (articles) {
+            const { data: users, error: usersError }: { data: any[] | null, error: any } = await db.from('users_access').select('user_id, name').in('user_id', articles?.map(a => a.author_id));
+            articles?.forEach(article => {
+                article.author_id = users?.find((user) => user.user_id === article.author_id)?.name;
+            });
+        }
+
+
+        if (articlesError) {
+            console.log('error from public repository searchArticles: ', articlesError);
+            throw articlesError;
+        }
+        return articles;
+    } catch (error) {
+        throw error;
+    }
+}
+
+
+export async function checkUserExist(email: string) {
+    try {
+        const db = await dbAccess();
+        const { data: user, error: userError } = await db.from('users_access').select('id, role, email').eq('email', email).single();
+        if (userError) {
+            console.log('error from public repository checkUserExist: ', userError);
+            throw userError;
+        }
+        return user;
+    } catch (error) {
+        throw error;
+    }
+}
+
+export async function storeResetPasswordToken({ email, token_hash, expiredAt, role }: { email: string, token_hash: string, expiredAt: string, role: string }) {
+    try {
+
+        // store token in tabel user_invites
+        const db = await dbAccess();
+        const { data, error } = await db.from('user_invites').insert({
+            email: email,
+            role: role,
+            status: 'pending',
+            token_hash: token_hash,
+            expires_at: expiredAt
+        });
+
+        if (error) {
+            console.log('error from public repository storeResetPasswordToken: ', error);
+            throw error;
+        }
+        return data;
+
+    } catch (error) {
+        throw error;
+    }
+}
+
+export async function verifyResetToken(token_hash: string) {
+    try {
+        const db = await dbAccess();
+        const { data, error } = await db.from('user_invites')
+            .select('email')
+            .eq('token_hash', token_hash)
+            .eq('status', 'pending')
+            .gt('expires_at', new Date().toISOString())
+            .single();
+
+        if (error) {
+            console.log('error from public repository verifyResetToken: ', error);
+            throw error;
+        }
+        return data;
+    } catch (error) {
+        throw error;
+    }
+}
+
+export async function invalidateToken(token_hash: string) {
+    try {
+        const db = await dbAccess();
+        const { error } = await db.from('user_invites')
+            .update({ status: 'expired' })
+            .eq('token_hash', token_hash);
+
+        if (error) {
+            console.log('error from public repository invalidateToken: ', error);
+            throw error;
+        }
+    } catch (error) {
+        throw error;
+    }
+}
+
+export async function updateUserPassword(email: string, password: string) {
+    try {
+        const db = await dbAccess();
+
+        // 1. Get user_id from users_access
+        const { data: user, error: userError } = await db.from('users_access')
+            .select('user_id')
+            .eq('email', email)
+            .single();
+
+        if (userError || !user) {
+            console.log('error from public repository updateUserPassword (get user): ', userError);
+            throw new Error("User not found");
+        }
+
+        // 2. Update auth user password
+        const { error: updateError } = await db.auth.admin.updateUserById(
+            user.user_id,
+            { password: password }
+        );
+
+        if (updateError) {
+            console.log('error from public repository updateUserPassword (update auth): ', updateError);
+            throw updateError;
+        }
+
+    } catch (error) {
+        throw error;
+    }
+}

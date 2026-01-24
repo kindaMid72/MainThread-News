@@ -1,4 +1,3 @@
-
 // types
 import { ArticleQuery } from "@/types/Article.type";
 import { format } from "date-fns";
@@ -45,8 +44,10 @@ export default function SpecificArticlePage({ article, relatedArticles }: Props)
                         <Image
                             src={article.thumbnail_url as string || "https://via.placeholder.com/800x450"}
                             alt={article.title as string || "Article Image"}
-                            fill
-                            className="object-cover"
+                            width={800}
+                            height={450}
+                            
+                            className="object-cover w-full h-full"
                             priority
                         />
                     </div>
@@ -82,7 +83,7 @@ export default function SpecificArticlePage({ article, relatedArticles }: Props)
                 <aside className="lg:col-span-4 space-y-12">
                     {/* Related Articles Widget */}
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sticky top-24">
-                        <h3 className="font-bold text-xl text-gray-900 mb-6 flex items-center gap-2 border-b-2 border-red-500 pb-2">
+                        <h3 className="font-bold text-xl text-gray-900 mb-6 flex items-center gap-2 border-b-2 border-blue-500 pb-2">
                             Related News
                         </h3>
                         <div className="flex flex-col gap-6">

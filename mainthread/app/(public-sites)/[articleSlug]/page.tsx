@@ -8,6 +8,19 @@ interface Props {
     params: Promise<{articleSlug: string}>;
 }
 
+// metadata ssr
+export async function generateMetadata({params}: any) {
+    const slug = (await params).articleSlug;
+
+    const articleResponse = await api.get(`/api/public/get-article-content/${slug}`);
+    const article = articleResponse.data;
+
+    return {
+        title: article.title,
+        description: article.content_html,
+    }
+}
+
 export default async function ArticlePage({params}: Props) {
     const slug = (await params).articleSlug;
 

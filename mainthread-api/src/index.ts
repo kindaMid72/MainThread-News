@@ -9,13 +9,17 @@ dotenv.config();
 import route from "./routes/route";
 
 const app = express();
+
+const allowedOrigins = [process.env.CLIENT_URL!];
+
 app.use(cors({
-    origin: process.env.CLIENT_URL,
+    origin: allowedOrigins,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     preflightContinue: false,
     optionsSuccessStatus: 204,
     credentials: true, 
 }));
+
 app.use(express.json());
 
 const port = process.env.PORT;

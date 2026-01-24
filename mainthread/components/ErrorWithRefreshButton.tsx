@@ -1,20 +1,30 @@
+import { RefreshCcw, AlertTriangle } from "lucide-react";
 
-
-export default function ErrorWithRefreshButton({onRefresh}: {onRefresh: () => void}) {
+export default function ErrorWithRefreshButton({
+    onRefresh,
+}: {
+    onRefresh: () => void;
+}) {
     return (
-        <div className="p-6 flex flex-col items-center justify-center min-h-[400px] text-center">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
-                <div className="w-8 h-8 text-red-600">⚠️</div>
+        <div className="flex h-screen fixed w-full flex-col items-center justify-center bg-linear-to-br from-gray-50 to-gray-100 px-6 text-center">
+            <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-transparent">
+                <AlertTriangle className="size-40 text-red-600" />
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">Gagal Memuat Data</h3>
-            <p className="text-gray-500 max-w-md mb-6">
-                Terjadi kesalahan saat menghubungi server. Mohon periksa koneksi internet Anda atau coba beberapa saat lagi.
+
+            <h1 className="mb-3 text-3xl font-extrabold tracking-tight text-gray-900">
+                Data Fetch Failed
+            </h1>
+
+            <p className="mb-10 max-w-md text-base leading-relaxed text-gray-600">
+                Server unreachable. Could be a network issue or the service is temporarily down.
             </p>
+
             <button
                 onClick={onRefresh}
-                className="px-6 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
+                className="inline-flex items-center gap-2 rounded-full bg-gray-900 px-7 py-3 text-sm font-semibold text-white transition-all hover:bg-gray-800 active:scale-95"
             >
-                Coba Lagi
+                <RefreshCcw className="h-4 w-4" />
+                Reload
             </button>
         </div>
     );

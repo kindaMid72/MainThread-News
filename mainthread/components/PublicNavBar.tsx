@@ -1,134 +1,294 @@
 "use client"
-import { useParams, usePathname, useRouter } from 'next/navigation';
+import { format } from 'date-fns';
+import { Loader2, Search } from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { Search } from 'lucide-react';
+
+// types
+import { ArticleQuery } from '@/types/Article.type';
+
+// libs
+import api from '@/libs/axiosInterceptor/axiosPublicInterceptor';
+
+// utils
+import { useDebounce } from '@/hooks/useDebounce';
+
+
+// components
+import MainThreadLogo from './MainThreadLogo';
+
 /**
  * 
- * FIXME: awesome icon didnt shown
+ * FIXME: awesome icon doesnt shown
  */
 
 export default function PublicNavBar() {
-    const router = useRouter();
-    const params = useParams();
-    const pathname = usePathname();
-    const { userId } = params;
 
-    // state
+    const pathname = usePathname();
+
+    // state TODO: implement search features
     const [showSidebar, setShowSidebar] = useState<boolean>(false);
     const [showSearch, setShowSearch] = useState<boolean>(false);
+    const [searchQuery, setSearchQuery] = useState<string>('');
+    const [searchResults, setSearchResults] = useState<ArticleQuery[]>([]);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+
+    const [page, setPage] = useState<number>(1);
+    const limit = 5;
+
+    const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
     // ref 
-    const inputSearchRef = useRef<HTMLInputElement>(null);
+    const inputSearchRef = useRef<HTMLDivElement>(null);
 
-    // navigation items
-    const navItems = [// landing page (no route), about, all article, contact,  
-        { name: 'About', path: 'about', icon: 'fa-info-circle' },
-        { name: 'Thread', path: '', icon: 'fa-chart-line' },
-        { name: 'Articles', path: 'articles', icon: 'fa-newspaper' },
-        // { name: 'Contact', path: 'contact', icon: 'fa-envelope' },
-    ];
 
-    // active/inactive styles (White Theme)
-    const activeClass = 'bg-gray-100 text-gray-900 font-semibold border-l-4 border-gray-800';
-    const inactiveClass = 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-l-4 border-transparent';
+    const handleSearch = (query: string) => {
+        // implement search api call   
+        setPage(1);
+        setSearchResults([]);
+        if (!query) return;
 
-    const handleNavigate = (path: string) => {
-        router.push(`/${path}`);
-        setShowSidebar(false); // Close sidebar on mobile select
+        setIsLoading(true);
+        setSearchQuery(query);
+
+        api.get(`/api/public/search?query=${query}&page=${1}&limit=${limit}`)
+            .then((res) => {
+                setSearchResults(res.data);
+            })
+            .catch((err) => {
+                console.log('error from public controller /search: ', err);
+            })
+            .finally(() => {
+                setIsLoading(false);
+            });
+    };
+
+    const handleMore = () => { // case: show more button got pressed
+        const nextPage = page + 1;
+        setPage(nextPage);
+        setIsLoading(true);
+        // fetch more articles, then append to searchResults
+        api.get(`/api/public/search?query=${debouncedSearchQuery}&page=${nextPage}&limit=${limit}`)
+            .then((res) => {
+                if (res.data.length === 0) return; // No more data
+                setSearchResults((prev) => [...prev, ...res.data]);
+            })
+            .catch((err) => {
+                console.log('error from public controller /search: ', err);
+            })
+            .finally(() => {
+                setIsLoading(false);
+            });
     };
 
     useEffect(() => {
+        // start new search process, start everything from 0
+        handleSearch(debouncedSearchQuery);
+    }, [debouncedSearchQuery]);
+
+
+
+    useEffect(() => {
         // check the current window possition
-        function checkInputSearchRef(e: MouseEvent){
-            if(showSearch && inputSearchRef.current && !inputSearchRef.current.contains(e.target as Node)){
+        function checkInputSearchRef(e: MouseEvent) {
+            if (inputSearchRef.current && !inputSearchRef.current.contains(e.target as Node)) {
                 setShowSearch(false);
             }
         }
-
-        // add event listener
-        document.addEventListener('click', checkInputSearchRef);
-
-        return () => {
-            document.removeEventListener('click', checkInputSearchRef);
-        };
+        window.addEventListener('mousedown', checkInputSearchRef);
+        return () => window.removeEventListener('mousedown', checkInputSearchRef);
     }, [inputSearchRef.current]);
 
-    const isActive = (path: string) => pathname === `/${path}`;
+    const isActive = (path: string) => {
+        // iterate through all possible path page, and return true if the path is matching
+        if (path.includes('articles')) {
+            return pathname.includes('articles');
+        }
+        return pathname === `/${path}`;
+    };
 
     return (
         <nav className='sticky font-sans flex flex-col top-0 z-50 w-full bg-white border-b border-gray-200 shadow-[0px_0px_20px_rgba(0,0,0,0.1)]'>
 
-            {showSearch && (
-                <div >
-                    <div className='fixed z-40 w-full h-full bg-black/5 backdrop-blur-sm'> {/** bg blur drop */}
+            <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full h-16 flex items-center justify-between'>
+                <div className='flex items-center gap-2'>
+                    <div
+                        onClick={() => setShowSidebar(true)}
+                        className='md:hidden p-2 rounded-md hover:bg-gray-100 cursor-pointer'
+                    >
+                        <i className='fa-solid fa-bars text-xl'></i>
                     </div>
-                    <div ref={inputSearchRef} className='flex items-center gap-2 bg-transparent fixed z-50 w-60 left-1/2 -translate-x-1/2 top-50 rounded-md border-gray-200 shadow-[0px_0px_20px_rgba(0,0,0,0.1)]'>
-                        <input type="text" placeholder='Search' className='w-full p-2 border border-gray-200 bg-white rounded-md focus:outline-none' />
+                    <div className='text-2xl font-black tracking-tighter'>
+                        <Link href='/' className='text-2xl font-black tracking-tighter'>
+                            <MainThreadLogo />
+                        </Link>
                     </div>
                 </div>
+
+                <div className='hidden md:flex flex-1 max-w-md mx-8'>
+                    <div
+                        onClick={() => setShowSearch(true)}
+                        className='w-full flex items-center gap-2 px-4 py-2 bg-gray-100 border border-transparent rounded-full text-gray-500 cursor-text hover:bg-white hover:border-gray-300 transition-all duration-200'
+                    >
+                        <Search className='w-4 h-4' />
+                        <span className='text-sm'>Search articles...</span>
+                    </div>
+                </div>
+
+                <div className='hidden md:flex gap-6 items-center'>
+                    <Link href='/' className={`text-lg font-semibold hover:text-blue-700 transition-colors ${isActive('') ? 'text-blue-700' : 'text-gray-600'}`}>
+                        Home
+                    </Link>
+                    <Link href='/articles?page=1&limit=10' className={`text-lg font-semibold hover:text-blue-700 transition-colors ${isActive('articles') ? 'text-blue-700' : 'text-gray-600'}`}>
+                        Articles
+                    </Link>
+                    <Link href='/about' className={`text-lg font-semibold hover:text-blue-700 transition-colors ${isActive('about') ? 'text-blue-700' : 'text-gray-600'}`}>
+                        About
+                    </Link>
+
+                    <div className='w-px h-4 bg-gray-300 mx-2'></div>
+
+                    <button
+                        onClick={() => {
+                            const element = document.getElementById('subscribe-section');
+                            if (element) {
+                                element.scrollIntoView({ behavior: 'smooth' });
+                            } else {
+                                window.location.href = '/#subscribe-section';
+                            }
+                        }}
+                        className='px-6 py-2.5 bg-zinc-900 text-white text-sm font-bold rounded-full hover:bg-blue-700 transition-all shadow-lg shadow-blue-900/20 active:scale-95 flex items-center gap-2'
+                    >
+                        Subscribe
+                        <i className="fa-solid fa-arrow-right text-xs"></i>
+                    </button>
+                </div>
+
+                <div
+                    onClick={() => setShowSearch(true)}
+                    className='md:hidden p-2 text-gray-600'
+                >
+                    <Search className='w-5 h-5' />
+                </div>
+            </div>
+
+            {/* Mobile Nav */}
+            <div className={`fixed top-0 left-0 w-64 h-full bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out ${showSidebar ? 'translate-x-0' : '-translate-x-full'}`}>
+                <div className='p-5 border-b border-gray-100 flex items-center justify-between'>
+                    <div className='font-black italic text-xl'>MENU</div>
+                    <button onClick={() => setShowSidebar(false)} className='text-gray-400 hover:text-black'>
+                        <i className='fa-solid fa-times text-xl'></i>
+                    </button>
+                </div>
+                <div className='flex flex-col p-4 gap-2'>
+                    <Link href='/' onNavigate={() => setShowSidebar(false)} className='p-3 rounded-lg hover:bg-gray-50 font-semibold text-gray-700 text-lg'>Home</Link>
+                    <Link href='/articles' onNavigate={() => setShowSidebar(false)} className='p-3 rounded-lg hover:bg-gray-50 font-semibold text-gray-700 text-lg'>Articles</Link>
+                    <Link href='/about' onNavigate={() => setShowSidebar(false)} className='p-3 rounded-lg hover:bg-gray-50 font-semibold text-gray-700 text-lg'>About</Link>
+                    <div className='border-t border-gray-100 my-2'></div>
+                    <button
+                        onClick={() => {
+                            setShowSidebar(false);
+                            const element = document.getElementById('subscribe-section');
+                            if (element) {
+                                element.scrollIntoView({ behavior: 'smooth' });
+                            } else {
+                                window.location.href = '/#subscribe-section';
+                            }
+                        }}
+                        className='p-3 rounded-lg hover:bg-blue-50 font-bold text-blue-700 text-lg text-left cursor-pointer'
+                    >
+                        Subscribe
+                    </button>
+                </div>
+            </div>
+
+            {/* Overlay for Mobile Nav */}
+            {showSidebar && (
+                <div onClick={() => setShowSidebar(false)} className='fixed inset-0 bg-black/20 z-40 backdrop-blur-sm'></div>
             )}
 
-
-            <div className='shrink-0 flex items-center gap-2 px-4 border-b-2 min-h-16 border-gray-200'>
-                {/**heading brand */}
-                <button
-                    onClick={() => setShowSidebar(!showSidebar)}
-                    className='p-2 -ml-2 mr-2 text-gray-600 rounded-md  hover:bg-gray-100 lg:hidden focus:outline-none'
-                >
-                    <i className="fa-solid fa-bars text-xl text-black"></i>
-                </button>
-                <div onClick={() => handleNavigate('')} className='flex flex-1 items-center justify-evenly gap-2 cursor-pointer'>
-                    {/** search button here */}
-                    <div className='p-2 rounded-md group *:hover:text-black group-hover:text-blue-900 flex items-center gap-2 justify-center cursor-pointer'>
-                        <Search className="w-5 h-5 text-gray-600 group-hover:text-blue-900" onClick={() => setShowSearch(!showSearch)} />
-                    </div>
-                    <span className="text-3xl font-bold text-blue-900 tracking-tight flex items-baseline justify-center">Main<span className="text-3xl font-bold text-red-500 tracking-tight">Thread</span> <span className="text-xl font-normal text-gray-500">news</span></span>
-                    <div> {/** filler, add something later, idk yet */}
-
-                    </div>
-                </div>
-            </div>
-            <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 hidden lg:block'>
-                <div className='flex justify-between h-16'>
-                    <div className='flex justify-center'>
-                        {/* Desktop Menu Items (Horizontal) */}
-                        <div className='hidden lg:ml-10 lg:flex lg:space-x-8 min-h-16 font-bold '>
-                            {navItems.map((item) => (
-                                <button
-                                    key={item.path}
-                                    onClick={() => handleNavigate(item.path)}
-                                    className={`inline-flex items-center px-3 pt-1 cursor-pointer border-b-3 text-lg font-medium transition-colors duration-200 ${isActive(item.path)
-                                            ? 'border-red-800 text-blue-900'
-                                            : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-                                        }`}
-                                >
-                                    {item.name}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Mobile Menu (Dropdown) */}
-            {showSidebar && (
-                <div className='lg:hidden bg-white border-t border-gray-200'>
-                    <div className='pt-2 pb-3 space-y-1 px-2 shadow-lg '>
-                        {navItems.map((item) => (
-                            <button
-                                key={item.path}
-                                onClick={() => handleNavigate(item.path)}
-                                className={`block w-full text-left pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors duration-200 ${isActive(item.path)
-                                        ? 'bg-gray-50 border-gray-800 text-gray-900'
-                                        : 'border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700'
-                                    }`}
-                            >
-                                <div className="flex items-center">
-                                    <i className={`fa-solid ${item.icon} w-5 mr-1`}></i>
-                                    {item.name}
-                                </div>
+            {/* Search Overlay */}
+            {showSearch && (
+                <div className='fixed inset-0 z-50 flex flex-col items-center pt-4 sm:pt-24 bg-black/40 backdrop-blur-sm px-4'>
+                    <div
+                        ref={inputSearchRef}
+                        className='w-full max-w-2xl bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] sm:max-h-[70vh] animate-in fade-in zoom-in duration-200'
+                    >
+                        <div className='p-4 border-b border-gray-100 flex items-center gap-3 bg-white z-10'>
+                            <Search className="w-5 h-5 text-gray-400" />
+                            <input
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                type="text"
+                                placeholder='Search for topics, articles, or authors...'
+                                className='w-full text-lg placeholder:text-gray-300 focus:outline-none'
+                                autoFocus
+                            />
+                            <button onClick={() => setShowSearch(false)} className='p-2 text-gray-400 hover:text-gray-600 md:hidden'>
+                                <i className="fa-solid fa-times"></i>
                             </button>
-                        ))}
+                        </div>
+
+                        <div className='flex-1 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent'>
+
+                            {isLoading && searchResults.length === 0 && (
+                                <div className='flex items-center justify-center p-8 text-gray-400'>
+                                    <Loader2 className="w-6 h-6 animate-spin" />
+                                </div>
+                            )}
+
+                            {!isLoading && searchQuery && searchResults.length === 0 && (
+                                <div className='text-center p-8 text-gray-400'>
+                                    No results found for "{searchQuery}"
+                                </div>
+                            )}
+
+                            {searchResults.length > 0 && (
+                                <div className='flex flex-col'>
+                                    {searchResults.map((article) => (
+                                        <Link
+                                            key={article.id}
+                                            href={`/${article.slug}`}
+                                            onClick={() => setShowSearch(false)}
+                                            className='flex items-start gap-4 p-3 rounded-lg hover:bg-gray-50 transition-colors group'
+                                        >
+                                            <div className='relative w-20 h-14 bg-gray-100 rounded-md overflow-hidden shrink-0'>
+                                                {article.thumbnail_url && (
+                                                    <Image
+                                                        src={article.thumbnail_url}
+                                                        alt={article.title || 'Article thumbnail'}
+                                                        fill
+                                                        className='object-cover'
+                                                    />
+                                                )}
+                                            </div>
+                                            <div className='flex-1 min-w-0'>
+                                                <h4 className='font-bold text-gray-900 group-hover:text-blue-700 transition-colors line-clamp-2 text-sm mb-1'>
+                                                    {article.title}
+                                                </h4>
+                                                <div className='flex items-center gap-2 text-xs text-gray-400'>
+                                                    <span>{article.author_id}</span>
+                                                    <span>•</span>
+                                                    <span>{article.published_at ? format(new Date(article.published_at), 'MMM dd, yyyy') : ''}</span>
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    ))}
+
+                                    <div className='p-2 pt-4 border-t border-gray-50'>
+                                        <button
+                                            onClick={handleMore}
+                                            disabled={isLoading}
+                                            className='w-full py-2 text-sm font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors flex items-center justify-center gap-2'
+                                        >
+                                            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Load More Results'}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}
