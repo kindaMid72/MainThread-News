@@ -14,6 +14,11 @@ import api from '@/libs/axiosInterceptor/axiosPublicInterceptor';
 
 // utils
 import { useDebounce } from '@/hooks/useDebounce';
+
+
+// components
+import MainThreadLogo from './MainThreadLogo';
+
 /**
  * 
  * FIXME: awesome icon doesnt shown
@@ -22,7 +27,6 @@ import { useDebounce } from '@/hooks/useDebounce';
 export default function PublicNavBar() {
 
     const pathname = usePathname();
-    const searchParams = useSearchParams();
 
     // state TODO: implement search features
     const [showSidebar, setShowSidebar] = useState<boolean>(false);
@@ -38,7 +42,6 @@ export default function PublicNavBar() {
 
     // ref 
     const inputSearchRef = useRef<HTMLDivElement>(null);
-    const scrollRef = useRef<HTMLDivElement>(null);
 
 
     const handleSearch = (query: string) => {
@@ -117,9 +120,9 @@ export default function PublicNavBar() {
                     >
                         <i className='fa-solid fa-bars text-xl'></i>
                     </div>
-                    <div className='text-2xl font-black italic tracking-tighter'>
-                        <Link href='/' className='text-2xl font-black italic tracking-tighter'>
-                            MAIN<span className='text-red-600'>THREAD</span>
+                    <div className='text-2xl font-black tracking-tighter'>
+                        <Link href='/' className='text-2xl font-black tracking-tighter'>
+                            <MainThreadLogo />
                         </Link>
                     </div>
                 </div>
@@ -135,17 +138,32 @@ export default function PublicNavBar() {
                 </div>
 
                 <div className='hidden md:flex gap-6 items-center'>
-                    <Link href='/' className={`text-lg font-semibold hover:text-red-600 transition-colors ${isActive('') ? 'text-red-600' : 'text-gray-600'}`}>
+                    <Link href='/' className={`text-lg font-semibold hover:text-blue-700 transition-colors ${isActive('') ? 'text-blue-700' : 'text-gray-600'}`}>
                         Home
                     </Link>
-                    <Link href='/articles?page=1&limit=10' className={`text-lg font-semibold hover:text-red-600 transition-colors ${isActive('articles') ? 'text-red-600' : 'text-gray-600'}`}>
+                    <Link href='/articles?page=1&limit=10' className={`text-lg font-semibold hover:text-blue-700 transition-colors ${isActive('articles') ? 'text-blue-700' : 'text-gray-600'}`}>
                         Articles
                     </Link>
-                    <Link href='/about' className={`text-lg font-semibold hover:text-red-600 transition-colors ${isActive('about') ? 'text-red-600' : 'text-gray-600'}`}>
+                    <Link href='/about' className={`text-lg font-semibold hover:text-blue-700 transition-colors ${isActive('about') ? 'text-blue-700' : 'text-gray-600'}`}>
                         About
                     </Link>
 
                     <div className='w-px h-4 bg-gray-300 mx-2'></div>
+
+                    <button
+                        onClick={() => {
+                            const element = document.getElementById('subscribe-section');
+                            if (element) {
+                                element.scrollIntoView({ behavior: 'smooth' });
+                            } else {
+                                window.location.href = '/#subscribe-section';
+                            }
+                        }}
+                        className='px-6 py-2.5 bg-zinc-900 text-white text-sm font-bold rounded-full hover:bg-blue-700 transition-all shadow-lg shadow-blue-900/20 active:scale-95 flex items-center gap-2'
+                    >
+                        Subscribe
+                        <i className="fa-solid fa-arrow-right text-xs"></i>
+                    </button>
                 </div>
 
                 <div
@@ -168,6 +186,21 @@ export default function PublicNavBar() {
                     <Link href='/' onNavigate={() => setShowSidebar(false)} className='p-3 rounded-lg hover:bg-gray-50 font-semibold text-gray-700 text-lg'>Home</Link>
                     <Link href='/articles' onNavigate={() => setShowSidebar(false)} className='p-3 rounded-lg hover:bg-gray-50 font-semibold text-gray-700 text-lg'>Articles</Link>
                     <Link href='/about' onNavigate={() => setShowSidebar(false)} className='p-3 rounded-lg hover:bg-gray-50 font-semibold text-gray-700 text-lg'>About</Link>
+                    <div className='border-t border-gray-100 my-2'></div>
+                    <button
+                        onClick={() => {
+                            setShowSidebar(false);
+                            const element = document.getElementById('subscribe-section');
+                            if (element) {
+                                element.scrollIntoView({ behavior: 'smooth' });
+                            } else {
+                                window.location.href = '/#subscribe-section';
+                            }
+                        }}
+                        className='p-3 rounded-lg hover:bg-blue-50 font-bold text-blue-700 text-lg text-left cursor-pointer'
+                    >
+                        Subscribe
+                    </button>
                 </div>
             </div>
 
@@ -232,7 +265,7 @@ export default function PublicNavBar() {
                                                 )}
                                             </div>
                                             <div className='flex-1 min-w-0'>
-                                                <h4 className='font-bold text-gray-900 group-hover:text-red-600 transition-colors line-clamp-2 text-sm mb-1'>
+                                                <h4 className='font-bold text-gray-900 group-hover:text-blue-700 transition-colors line-clamp-2 text-sm mb-1'>
                                                     {article.title}
                                                 </h4>
                                                 <div className='flex items-center gap-2 text-xs text-gray-400'>

@@ -3,8 +3,10 @@ import express from "express";
 // types
 import { ArticleQuery } from "./public.types";
 
+// utils
+
 // services
-import { getAllArticlesService, getArticleContentService, getCategoryArticlesService, getMainPageContentService, getAllCategoriesService, searchArticlesService } from "./public.services";
+import { forgotPasswordService, getAllArticlesService, getAllCategoriesService, getArticleContentService, getCategoryArticlesService, getMainPageContentService, resetPasswordService, searchArticlesService } from "./public.services";
 
 const router = express.Router();
 
@@ -99,5 +101,30 @@ router.get('/search', async (req, res) => {
         return res.status(500).json({ message: "Internal Server Error" });
     }
 })
+
+router.post('/forgot-password/:email', async (req, res) => {
+    try {
+        const { email } = req.params;
+        const result = await forgotPasswordService({email});
+        return res.status(200).json(result);
+    } catch (error) {
+        console.log('error from public controller /forgot-password: ', error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+})
+
+router.post('/reset-password', async (req, res) => {
+    try {
+        const { token, password } = req.body;
+        if (!token || !password) {
+            return res.status(400).json({ message: "Token and password are required" });
+        }
+        const result = await resetPasswordService({ token, password });
+        return res.status(200).json(result);
+    } catch (error) {
+        console.log('error from public controller /reset-password: ', error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+});
 
 export default router;

@@ -79,7 +79,7 @@ export default function AllArticlePage({response, page, limit}: {response: any, 
                                 {groupArticles.map((article) => (
                                     <Link key={article.id} href={`/${article.slug}`} className="group flex flex-col h-full bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100">
                                         <div className="p-4 flex flex-col flex-1">
-                                            <h3 className="font-bold text-gray-900 leading-snug mb-2 group-hover:text-red-600 transition-colors line-clamp-2">
+                                            <h3 className="font-bold text-gray-900 leading-snug mb-2 group-hover:text-blue-600 transition-colors line-clamp-2">
                                                 {article.title}
                                             </h3>
                                             <div className="flex items-center justify-start gap-2 text-xs text-gray-400 mt-auto pt-3 border-t border-gray-50">

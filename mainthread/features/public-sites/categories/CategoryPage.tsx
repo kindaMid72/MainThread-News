@@ -24,7 +24,7 @@ export default function CategoryPage({ response, page, limit, categorySlug }: Ca
     // Group articles by Month Year
     const groupedArticles = articles.reduce((acc, article) => {
         if (!article.published_at) return acc;
-        const date = new Date(article.published_at);
+        const date = new Date(article.published_at);    
         // format: "January 2024"
         const key = format(date, "MMMM yyyy");
         if (!acc[key]) {
@@ -38,7 +38,7 @@ export default function CategoryPage({ response, page, limit, categorySlug }: Ca
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 min-h-screen">
-            <h1 className="text-4xl font-bold text-gray-900 mb-12 capitalize">{categorySlug}</h1>
+            <h1 className="text-4xl font-bold text-gray-900 mb-12 capitalize">{categorySlug.split('-')[0]}</h1>
 
             <div className="space-y-16">
                 {Object.entries(groupedArticles).map(([monthYear, groupArticles]) => (

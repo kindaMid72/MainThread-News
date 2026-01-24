@@ -83,7 +83,7 @@ export default function SpecificArticlePage({ article, relatedArticles }: Props)
                 <aside className="lg:col-span-4 space-y-12">
                     {/* Related Articles Widget */}
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sticky top-24">
-                        <h3 className="font-bold text-xl text-gray-900 mb-6 flex items-center gap-2 border-b-2 border-red-500 pb-2">
+                        <h3 className="font-bold text-xl text-gray-900 mb-6 flex items-center gap-2 border-b-2 border-blue-500 pb-2">
                             Related News
                         </h3>
                         <div className="flex flex-col gap-6">

@@ -1,9 +1,17 @@
+// imports
+import { Temporal } from "@js-temporal/polyfill";
+import hashSHA256 from "../../utils/cryptoTools/hashSHA256";
+import generateRandomToken from "../../utils/generator/generateRandomToken";
+import { checkUserExist, invalidateToken, storeResetPasswordToken, updateUserPassword, verifyResetToken } from "./public.repositories";
 
 // types
 import { ArticleQuery } from "./public.types";
 
 // repositories
-import { getAllArticles, getArticleContent, searchArticles, getCategoriesArticles, getMainPageContent } from "./public.repositories";
+import { getAllArticles, getArticleContent, getCategoriesArticles, getMainPageContent, searchArticles } from "./public.repositories";
+
+// emailer
+import Emailer from '../../config/emailer/emailerInstance';
 
 export async function getMainPageContentService(): Promise<{ latestNews: ArticleQuery[], headline: ArticleQuery[], breakingNews: ArticleQuery[], categories: any[] } | undefined> {
     try {
@@ -70,7 +78,7 @@ export async function getAllArticlesService(page: number, limit: number) {
 
 export async function getAllCategoriesService(page: number, limit: number, category_slug?: string) {
     try {
-        if(category_slug) {
+        if (category_slug) {
             const { articles, count } = await getAllArticles(page, limit, category_slug);
             return { articles, count };
         }
@@ -82,12 +90,81 @@ export async function getAllCategoriesService(page: number, limit: number, categ
     }
 }
 
-export async function searchArticlesService({query, page, limit}: {query: string, page: number, limit: number}) {
+export async function searchArticlesService({ query, page, limit }: { query: string, page: number, limit: number }) {
     try {
-        const articles = await searchArticles({query, page, limit});
+        const articles = await searchArticles({ query, page, limit });
         return articles;
     } catch (error) {
         console.log('error from public service searchArticlesService: ', error);
+        throw error;
+    }
+}
+
+
+export async function forgotPasswordService({ email }: { email: string }) {
+    try {
+        // check if user exist
+        const user = await checkUserExist(email);
+        if (!user) {
+            throw new Error("User not found");
+        }
+
+        // create token and store it with a expire date
+        const token = await generateRandomToken();
+        const token_hash = hashSHA256(token);
+        const expiredAt = Temporal.Now.zonedDateTimeISO().add({ hours: 1 }).toString().split('[')[0];
+
+        await storeResetPasswordToken({
+            email: user.email,
+            token_hash: token_hash,
+            expiredAt: expiredAt,
+            role: user.role
+        });
+
+        // send email with reset password link containt token
+        const resetLink = `${process.env.CLIENT_URL}/reset-password?token=${token}`;
+
+        await (async function () {
+            const { data: sendInvite, error: sendInviteError } = await Emailer.emails.send({
+                from: `MainThread.Writers <no-reply@${process.env.DOMAIN_NAME}>`,
+                to: [email],
+                subject: `Reset Your Password`,
+                html: `<p>You requested a password reset.</p><p>Click the link to reset your password: <a href="${resetLink}">${resetLink}</a></p><p>This link expires in 1 hour.</p>`,
+            });
+
+            if (sendInviteError) {
+                throw new Error(sendInviteError.message);
+            }
+        })();
+
+        // return success
+        return true;
+    } catch (error) {
+        console.log('error from public service forgotPasswordService: ', error);
+        throw error;
+    }
+}
+
+export async function resetPasswordService({ token, password }: { token: string, password: string }) {
+    try {
+        const token_hash = hashSHA256(token);
+
+        // 1. Verify token
+        const inviteData = await verifyResetToken(token_hash);
+        if (!inviteData || !inviteData.email) {
+            throw new Error("Invalid or expired token");
+        }
+
+        // 2. Update password
+        await updateUserPassword(inviteData.email, password);
+
+        // 3. Invalidate token
+        await invalidateToken(token_hash);
+
+        return { message: "Password reset successfully" };
+
+    } catch (error) {
+        console.log('error from public service resetPasswordService: ', error);
         throw error;
     }
 }
