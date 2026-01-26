@@ -110,7 +110,7 @@ export default function PublicNavBar() {
     };
 
     return (
-        <nav className='sticky font-sans flex flex-col top-0 z-50 w-full bg-white border-b border-gray-200 shadow-[0px_0px_20px_rgba(0,0,0,0.1)]'>
+        <nav className='sticky font-sans flex flex-col top-0 z-49 w-full bg-white border-b border-gray-200 shadow-[0px_0px_20px_rgba(0,0,0,0.1)]'>
 
             <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full h-16 flex items-center justify-between'>
                 <div className='flex items-center gap-2'>

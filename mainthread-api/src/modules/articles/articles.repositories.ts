@@ -297,6 +297,10 @@ export async function updateArticle(id: string, updates: Partial<ArticleQuery>):
             })
             .eq('id', id);
 
+        if(updates.slug){ // invalidate cache for slug
+            await redis.del(REDIS_KEY.ARTICLES(updates.slug));
+        }
+
         if (error) {
             console.error('Error updating article:', error);
             throw error;
@@ -371,10 +375,15 @@ export async function deleteArticle(id: string): Promise<void> {
         }
 
         // 2. Delete article
-        const { error: articleError } = await db
+        const { data: deletedArticles, error: articleError } = await db
             .from('articles')
             .delete()
-            .eq('id', id);
+            .eq('id', id)
+            .select();
+
+        if(deletedArticles){ // invalidate public slug
+            await redis.del(REDIS_KEY.ARTICLES(deletedArticles[0].slug));
+        }
 
         if(articleError){
             console.error('Error deleting article:', articleError);

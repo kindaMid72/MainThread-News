@@ -38,7 +38,7 @@ export default function CategoryPage({ response, page, limit, categorySlug }: Ca
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 min-h-screen">
-            <h1 className="text-4xl font-bold text-gray-900 mb-12 capitalize">{categorySlug.split('-')[0]}</h1>
+            <h1 className="text-4xl font-bold text-gray-900 mb-12 capitalize">{categorySlug.split('-').slice(0, -1).join(' ')}</h1>
 
             <div className="space-y-16">
                 {Object.entries(groupedArticles).map(([monthYear, groupArticles]) => (
@@ -54,9 +54,9 @@ export default function CategoryPage({ response, page, limit, categorySlug }: Ca
                                             {article.title}
                                         </h3>
                                         <div className="flex items-center justify-start gap-2 text-xs text-gray-400 mt-auto pt-3 border-t border-gray-50">
-                                            <span className="text-gray-500 font-medium">{article.view_count || 0} views |</span>
-                                            <span className="text-gray-500 font-medium">{article.author_id} |</span>
-                                            <span className="text-gray-500 font-medium">{article.published_at ? format(new Date(article.published_at), 'MMM dd, yyyy') : ""}</span>
+                                            <span className="text-gray-500 font-medium text-nowrap">{article.view_count || 0} views |</span>
+                                            <span className="text-gray-500 font-medium text-nowrap">{article.author_id} |</span>
+                                            <span className="text-gray-500 font-medium text-nowrap">{article.published_at ? format(new Date(article.published_at), 'MMM dd, yyyy') : ""}</span>
                                         </div>
                                     </div>
                                 </Link>

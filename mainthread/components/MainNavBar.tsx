@@ -8,6 +8,7 @@ import createBrowserClient from '@/libs/supabase/createBrowserClient';
  */
 
 import PopUpMessageCard from './PopUpMessage';
+import MainThreadLogo from './MainThreadLogo';
 
 export default function NavBar() {
     const router = useRouter();
@@ -94,7 +95,7 @@ export default function NavBar() {
                             >
                                 <i className="fa-solid fa-bars text-xl text-black"></i>
                             </button>
-                            <span className="text-xl font-bold text-blue-900 tracking-tight">Main<span className="text-xl font-bold text-red-500 tracking-tight">Thread</span> <span className="text-xs font-normal text-gray-500">Writers</span></span>
+                            <MainThreadLogo className='text-4xl! font-bold' />
                         </div>
 
                         {/* Desktop Menu Items (Horizontal) */}

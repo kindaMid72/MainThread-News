@@ -29,12 +29,12 @@ export async function getMainPageContentService(): Promise<{ latestNews: Article
         // FIXME: fix date format (why its acting that way)
 
         // fetch categories articles
-        const categoriesArticles = await Promise.all(categories.map((category) => getCategoriesArticles(category.id)));
-
-        // concat categories articles
-        categories.forEach((category, index) => {
-            category.articles = categoriesArticles[index];
-        });
+        if(categories.length > 0) {
+            const categoriesArticles = await Promise.all(categories.map((category) => getCategoriesArticles(category.id)));
+            categories.forEach((category, index) => {
+                category.articles = categoriesArticles[index];
+            }); 
+        }
 
         return {
             latestNews,
@@ -50,6 +50,7 @@ export async function getMainPageContentService(): Promise<{ latestNews: Article
 export async function getArticleContentService(slug: string): Promise<ArticleQuery | undefined> {
     try {
         const article = await getArticleContent(slug);
+        
         return article as ArticleQuery;
     } catch (error) {
         console.log('error from public service getArticleContent: ', error);

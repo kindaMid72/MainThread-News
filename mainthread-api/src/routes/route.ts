@@ -1,8 +1,9 @@
 import express from 'express';
 
 // import admin & public entry point
-import publicRoute from './public/public.route';
+import subscribeRoute from '../modules/subscribe/subscribe.controllers';
 import adminRoute from './admin/admin.route';
+import publicRoute from './public/public.route';
 
 const router = express.Router();
 
@@ -11,5 +12,8 @@ router.use('/admin', adminRoute);
 
 // public entry point
 router.use('/public', publicRoute);
+
+// subscribe entry point
+router.use('/', subscribeRoute);
 
 export default router;

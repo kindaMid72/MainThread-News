@@ -83,9 +83,9 @@ export default function AllArticlePage({response, page, limit}: {response: any, 
                                                 {article.title}
                                             </h3>
                                             <div className="flex items-center justify-start gap-2 text-xs text-gray-400 mt-auto pt-3 border-t border-gray-50">
-                                                <span className="text-gray-500 font-medium">{article.view_count || 0} views |</span>
-                                                <span className="text-gray-500 font-medium">{article.author_id} |</span>
-                                                <span className="text-gray-500 font-medium">{article.published_at ? format(new Date(article.published_at), 'MMM dd, yyyy') : ""}</span>
+                                                <span className="text-gray-500 font-medium text-nowrap">{article.view_count || 0} views |</span>
+                                                <span className="text-gray-500 font-medium text-nowrap">{article.author_id} |</span>
+                                                <span className="text-gray-500 font-medium text-nowrap">{article.published_at ? format(new Date(article.published_at), 'MMM dd, yyyy') : ""}</span>
                                             </div>
                                         </div>
                                     </Link>

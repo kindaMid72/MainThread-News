@@ -1,7 +1,7 @@
 // types
 import { ArticleQuery } from "@/types/Article.type";
 import { format } from "date-fns";
-import { FileQuestion } from "lucide-react";
+import { Eye, FileQuestion } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -46,7 +46,7 @@ export default function SpecificArticlePage({ article, relatedArticles }: Props)
                             alt={article.title as string || "Article Image"}
                             width={800}
                             height={450}
-                            
+
                             className="object-cover w-full h-full"
                             priority
                         />
@@ -66,7 +66,13 @@ export default function SpecificArticlePage({ article, relatedArticles }: Props)
                                 {/* <div className="w-10 h-10 bg-gray-200 rounded-full"></div> Placeholder for Author Avatar */}
                                 <div>
                                     <span className="font-semibold text-gray-900 block">{article.author_id}</span>
-                                    <span>{article.published_at ? format(new Date(article.published_at), "MMM dd, yyyy") : "Date unavailable"}</span>
+                                    <div className="flex items-center gap-3">
+                                        <span>{article.published_at ? format(new Date(article.published_at), "MMM dd, yyyy") : "Date unavailable"}</span>
+                                        <div className="flex items-center gap-1 text-gray-400">
+                                            <Eye className="w-4 h-4" />
+                                            <span>{article.view_count || 0} views</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             {/* Social Share Buttons could go here */}
@@ -75,7 +81,7 @@ export default function SpecificArticlePage({ article, relatedArticles }: Props)
 
                     {/* Article Content */}
                     <article className="max-w-none">
-                        <HtmlRenderer className="prose prose-lg prose-blue max-w-none text-xl text-gray-800 leading-loose prose-p:mb-6 prose-headings:font-bold prose-headings:text-gray-900 prose-a:text-blue-600 hover:prose-a:text-blue-500 prose-img:rounded-xl [&_p]:mb-4 [&_img]:my-4 [&_img]:w-full [&_img]:h-auto [&_img]:object-cover" htmlString={article.content_html as string || ""} />
+                        <HtmlRenderer className="prose prose-lg prose-blue [&_p]:text-lg max-w-none text-xl text-gray-800 leading-loose prose-p:mb-6 prose-headings:font-bold prose-headings:text-gray-900 prose-a:text-blue-600 hover:prose-a:text-blue-500 prose-img:rounded-xl [&_p]:mb-4 [&_img]:my-4 [&_img]:w-full [&_img]:h-auto [&_img]:object-cover [&_h1]:text-3xl [&_h2]:text-2xl [&_h3]:text-xl [&_h4]:text-lg [&_h5]:text-base [&_h6]:text-sm [&_h1]:font-bold [&_h2]:font-bold [&_h3]:font-bold [&_h4]:font-bold [&_h5]:font-bold [&_h6]:font-bold [&_h1]:mb-2 [&_h2]:my-3 [&_h3]:my-4 [&_h4]:my-5 [&_h5]:my-6 [&_h6]:my-7 [&_a]:text-blue-700 [&_a]:underline" htmlString={article.content_html as string || ""} />
                     </article>
                 </div>
 

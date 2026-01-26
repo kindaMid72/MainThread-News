@@ -1,7 +1,11 @@
 import dbAccess from '../../config/database/createDbAccess';
+import redis from '../../config/redis/createRedisAccess'
 
 // types
 import { ArticleQuery } from './public.types';
+
+//const 
+import { REDIS_KEY } from '../../const/const.redis';
 
 export async function getMainPageContent(): Promise<{ latestNews: ArticleQuery[], headline: ArticleQuery[], breakingNews: ArticleQuery[], categories: any[] }> {
     try {
@@ -27,9 +31,15 @@ export async function getMainPageContent(): Promise<{ latestNews: ArticleQuery[]
         // assign article to user
         if (headline) {
             const { data: users, error: usersError } = await db.from('users_access').select('user_id, name').eq('user_id', headline[0].author_id);
-            headline.forEach((article) => {
-                article.author_id = users?.find((user) => user.user_id === article.author_id)?.name;
-            });
+            if(users && users.length > 0) {
+                headline.forEach((article) => {
+                    article.author_id = users.find((user) => user.user_id === article.author_id)?.name;
+                });
+            }else{
+                headline.forEach((article) => {
+                    article.author_id = 'Unknown';
+                });
+            }
         }
 
         if (latestNewsError || headlineError || breakingNewsError || categoriesError) {
@@ -67,8 +77,22 @@ export async function getCategoriesArticles(categoryId: string) {
 export async function getArticleContent(slug: string) {
     try {
         const db = await dbAccess();
+
+        const redisKey = REDIS_KEY.ARTICLES(slug);
+        const cachedArticle: ArticleQuery | null = await redis.get(redisKey);
+        if (cachedArticle) {
+            // increment views
+            const {data: viewCount, error: viewCountError} = await db.from('articles').select('view_count').eq('slug', slug).single();
+            if(viewCount){
+                const { data: views, error: viewsError } = await db.from('articles').update({ view_count: viewCount.view_count + 1 }).eq('slug', slug).select('*');
+            }
+            return cachedArticle;
+        }
+        
         let { data: article, error: articleError } = await db.from('articles').select('*').eq('slug', slug).eq('status', 'published').single();
 
+        // increment views
+        const { data: views, error: viewsError } = await db.from('articles').update({ view_count: article.view_count + 1 }).eq('slug', slug).select('*');
         // get name of author
         const { data: users, error: usersError } = await db.from('users_access').select('user_id, name').eq('user_id', article.author_id);
         article.author_id = users?.find((user) => user.user_id === article.author_id)?.name;
@@ -76,6 +100,10 @@ export async function getArticleContent(slug: string) {
             console.log('error from public repository getArticleContent: ', articleError);
             throw articleError;
         }
+
+        // set redis
+        const newArticleKey = REDIS_KEY.ARTICLES(article.slug);
+        await redis.set(newArticleKey, article);
         return article;
     } catch (error) {
         throw error;
