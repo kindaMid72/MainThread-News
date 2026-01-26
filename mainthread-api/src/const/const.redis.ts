@@ -6,4 +6,5 @@ export const REDIS_KEY = {
     TAGS: 'tags',
     ARTICLES: (articleId: string) => `article:${articleId}`,
     ARTICLES_TAGS: (articleId: string) => `article_tags:${articleId}`,
+    
 } as const;

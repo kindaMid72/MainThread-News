@@ -50,6 +50,7 @@ export async function getMainPageContentService(): Promise<{ latestNews: Article
 export async function getArticleContentService(slug: string): Promise<ArticleQuery | undefined> {
     try {
         const article = await getArticleContent(slug);
+        
         return article as ArticleQuery;
     } catch (error) {
         console.log('error from public service getArticleContent: ', error);
