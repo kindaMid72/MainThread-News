@@ -18,7 +18,6 @@ export default function SubscribeCard() {
         setSuccess('');
         try {
             const response = await api.post(`/api/subscribe/${email}`);
-            console.log(response);
             if (response?.status !== 200 && response?.status !== 201) {
                 throw new Error(`Failed to attempt subscribe, ${response?.data?.message}`);
             }
@@ -42,13 +41,14 @@ export default function SubscribeCard() {
         setSuccess('');
         try {
             const response = await api.post(`/api/unsubscribe/${email}`);
-            if (response?.status !== 200) {
-                throw new Error('Failed to unsubscribe');
+            console.log(response);
+            if (response?.status !== 200 && response?.status !== 201) {
+                throw new Error(`Failed to attempt unsubscribe, ${response?.data?.message}`);
             }
             setEmail('');
             setSuccess('Unsubscribe email sent. Please check your inbox.');
         } catch (error) {
-            setError('Failed to unsubscribe. Please try again.');
+            setError('Failed to unsubscribe, make sure you enter the correct email.');
         } finally {
             setSubmittingType(null);
         }
