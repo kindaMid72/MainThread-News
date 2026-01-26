@@ -1,12 +1,14 @@
 import { ArticleQuery } from "@/types/Public.type";
 import stringToColor from '@/utils/stringToColor';
-import { format } from "date-fns";
 import { ArrowUpRight, Clock, TrendingUp } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
 // imponents
+import FormattedDate from "@/components/FormattedDate";
 import MainThreadLogo from "@/components/MainThreadLogo";
+
+import SubscribeCard from "./components/SubscribeCard";
 
 interface MainResponse {
     data: {
@@ -51,26 +53,28 @@ export default function LandingPage({ response }: { response: MainResponse }) {
 
                         <div className="space-y-6">
                             {breakingNews.slice(0, 3).map((article) => (
-                                <Link key={article.id} href={`/${article.slug}`} className="group block">
-                                    <article className="flex flex-col gap-2">
-                                        <div className="relative w-full aspect-3/2 rounded-lg overflow-hidden mb-2">
-                                            <Image
-                                                src={article.thumbnail_url || ""}
-                                                alt={article.title || ""}
-                                                fill
-                                                className="object-cover"
-                                            />
+                                <article key={article.id}>
+                                    <Link href={`/${article.slug}`} className="group block">
+                                        <div className="flex flex-col gap-2">
+                                            <div className="relative w-full aspect-3/2 rounded-lg overflow-hidden mb-2">
+                                                <Image
+                                                    src={article.thumbnail_url || ""}
+                                                    alt={article.title || ""}
+                                                    fill
+                                                    className="object-cover"
+                                                />
+                                            </div>
+                                            <h4 className="font-bold text-lg leading-snug group-hover:text-blue-700 transition-colors">
+                                                {article.title}
+                                            </h4>
+                                            <div className="text-xs text-zinc-400 font-medium flex items-center gap-2">
+                                                <FormattedDate date={article.published_at as string} formatStr="HH:mm" />
+                                                <span className="w-1 h-1 rounded-full bg-zinc-300"></span>
+                                                {categories.find(c => c.id === article.category_id)?.name}
+                                            </div>
                                         </div>
-                                        <h4 className="font-bold text-lg leading-snug group-hover:text-blue-700 transition-colors">
-                                            {article.title}
-                                        </h4>
-                                        <div className="text-xs text-zinc-400 font-medium flex items-center gap-2">
-                                            {format(new Date(article.published_at as string), "HH:mm")}
-                                            <span className="w-1 h-1 rounded-full bg-zinc-300"></span>
-                                            {categories.find(c => c.id === article.category_id)?.name}
-                                        </div>
-                                    </article>
-                                </Link>
+                                    </Link>
+                                </article>
                             ))}
                         </div>
                     </div>
@@ -78,39 +82,41 @@ export default function LandingPage({ response }: { response: MainResponse }) {
                     {/* Center Column: Main Feature Story */}
                     <div className="lg:col-span-6 order-1 lg:order-2">
                         {mainStory && (
-                            <Link href={`/${mainStory.slug}`} className="group block">
-                                <article className="flex flex-col h-full">
-                                    <div className="relative w-full aspect-16/10 overflow-hidden rounded-2xl shadow-sm bg-zinc-100 mt-auto">
-                                        <Image
-                                            src={mainStory.thumbnail_url || ""}
-                                            alt={mainStory.title || ""}
-                                            fill
-                                            className="object-cover"
-                                            priority
-                                        />
-                                    </div>
-                                    <div className="mb-6">
-                                        <div className="flex items-center gap-3 mb-1 mt-3 text-xs font-bold tracking-wider uppercase">
-                                            <span className="text-blue-600">
-                                                {categories.find((category) => category.id === mainStory.category_id)?.name}
-                                            </span>
-                                            <span className="text-zinc-300">|</span>
-                                            <span className="text-zinc-500 font-medium">
-                                                {format(new Date(mainStory.published_at as string), "MMMM dd, yyyy")}
-                                            </span>
-                                            <span className="text-zinc-300">|</span>
-                                            <span className="text-zinc-500 font-medium">{mainStory.author_id}</span>
-                                        </div>
+                            <article>
+                                <Link href={`/${mainStory.slug}`} className="group block">
+                                    <span className="flex flex-col h-full">
+                                        <span className="relative w-full aspect-16/10 overflow-hidden rounded-2xl shadow-sm bg-zinc-100 mt-auto">
+                                            <Image
+                                                src={mainStory.thumbnail_url || ""}
+                                                alt={mainStory.title || ""}
+                                                fill
+                                                className="object-cover"
+                                                priority
+                                            />
+                                        </span>
+                                        <span className="mb-6">
+                                            <div className="flex items-center gap-3 mb-1 mt-3 text-xs font-bold tracking-wider uppercase">
+                                                <span className="text-blue-600">
+                                                    {categories.find((category) => category.id === mainStory.category_id)?.name}
+                                                </span>
+                                                <span className="text-zinc-300">|</span>
+                                                <span className="text-zinc-500 font-medium">
+                                                    <FormattedDate date={mainStory.published_at as string} formatStr="MMMM dd, yyyy" />
+                                                </span>
+                                                <span className="text-zinc-300">|</span>
+                                                <span className="text-zinc-500 font-medium">{mainStory.author_id}</span>
+                                            </div>
 
-                                        <h1 className="text-3xl md:text-4xl lg:text-5xl font-black text-zinc-900 leading-[1.1] tracking-tight group-hover:text-blue-700 transition-colors mb-4 text-left">
-                                            {mainStory.title}
-                                        </h1>
+                                            <h1 className="text-3xl md:text-4xl lg:text-5xl font-black text-zinc-900 leading-[1.1] tracking-tight group-hover:text-blue-700 transition-colors mb-4 text-left">
+                                                {mainStory.title}
+                                            </h1>
 
-                                        <div className="text-lg text-zinc-600 leading-relaxed line-clamp-3 text-left" dangerouslySetInnerHTML={{ __html: tempHeadline as string }} />
-                                    </div>
+                                            <span className="text-lg text-zinc-600 leading-relaxed line-clamp-3 text-left" dangerouslySetInnerHTML={{ __html: tempHeadline as string }} />
+                                        </span>
 
-                                </article>
-                            </Link>
+                                    </span>
+                                </Link>
+                            </article>
                         )}
                     </div>
 
@@ -137,7 +143,7 @@ export default function LandingPage({ response }: { response: MainResponse }) {
                                             </h4>
                                             <div className="flex items-center gap-2 mt-2 text-xs text-zinc-400">
                                                 <Clock className="w-3 h-3" />
-                                                {format(new Date(article.published_at as string), "MMM dd")}
+                                                <FormattedDate date={article.published_at as string} formatStr="MMM dd" />
                                             </div>
                                         </div>
                                     </article>
@@ -194,7 +200,7 @@ export default function LandingPage({ response }: { response: MainResponse }) {
 
                                             <div className="flex-1 flex flex-col">
                                                 <div className="text-xs font-medium text-zinc-500 mb-2 flex items-center justify-between">
-                                                    <span>{format(new Date(article.published_at as string), 'MMM dd, yyyy')}</span>
+                                                    <span><FormattedDate date={article.published_at as string} formatStr="MMM dd, yyyy" /></span>
                                                 </div>
                                                 <h3 className="text-lg font-bold text-zinc-900 leading-tight mb-3 group-hover:text-blue-700 transition-colors line-clamp-3">
                                                     {article.title}
@@ -212,28 +218,7 @@ export default function LandingPage({ response }: { response: MainResponse }) {
                 </div>
 
                 {/* Footer / CTA Area */}
-                <section id="subscribe-section" className="mt-24 py-20 bg-zinc-900 rounded-3xl text-center px-4 relative overflow-hidden">
-                    <div className="absolute inset-0 opacity-10"></div>
-                    <div className="relative z-10 max-w-2xl mx-auto">
-                        <MainThreadLogo className="text-white!" />
-                        <h2 className="text-3xl md:text-5xl font-black text-white mb-6 tracking-tight">
-                            Stay Ahead of the Curve
-                        </h2>
-                        <p className="text-zinc-400 text-lg mb-8">
-                            Get the latest tech news, industry insights, and in-depth analysis delivered straight to your inbox.
-                        </p>
-                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                            <input
-                                type="email"
-                                placeholder="Enter your email"
-                                className="px-6 py-4 rounded-full bg-white/10 border border-white/10 text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[300px]"
-                            />
-                            <button className="px-8 py-4 bg-blue-600 text-white font-bold rounded-full hover:bg-blue-500 transition-colors shadow-lg shadow-blue-600/20">
-                                Subscribe Now
-                            </button>
-                        </div>
-                    </div>
-                </section>
+                <SubscribeCard />
 
                 <section className="mt-16 text-center border-t border-zinc-100 pt-8">
                     <p className="text-zinc-400 text-sm">

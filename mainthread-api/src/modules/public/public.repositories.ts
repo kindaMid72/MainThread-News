@@ -27,9 +27,15 @@ export async function getMainPageContent(): Promise<{ latestNews: ArticleQuery[]
         // assign article to user
         if (headline) {
             const { data: users, error: usersError } = await db.from('users_access').select('user_id, name').eq('user_id', headline[0].author_id);
-            headline.forEach((article) => {
-                article.author_id = users?.find((user) => user.user_id === article.author_id)?.name;
-            });
+            if(users && users.length > 0) {
+                headline.forEach((article) => {
+                    article.author_id = users.find((user) => user.user_id === article.author_id)?.name;
+                });
+            }else{
+                headline.forEach((article) => {
+                    article.author_id = 'Unknown';
+                });
+            }
         }
 
         if (latestNewsError || headlineError || breakingNewsError || categoriesError) {

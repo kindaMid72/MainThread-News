@@ -29,12 +29,12 @@ export async function getMainPageContentService(): Promise<{ latestNews: Article
         // FIXME: fix date format (why its acting that way)
 
         // fetch categories articles
-        const categoriesArticles = await Promise.all(categories.map((category) => getCategoriesArticles(category.id)));
-
-        // concat categories articles
-        categories.forEach((category, index) => {
-            category.articles = categoriesArticles[index];
-        });
+        if(categories.length > 0) {
+            const categoriesArticles = await Promise.all(categories.map((category) => getCategoriesArticles(category.id)));
+            categories.forEach((category, index) => {
+                category.articles = categoriesArticles[index];
+            }); 
+        }
 
         return {
             latestNews,

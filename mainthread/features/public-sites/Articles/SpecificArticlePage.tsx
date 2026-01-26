@@ -75,7 +75,7 @@ export default function SpecificArticlePage({ article, relatedArticles }: Props)
 
                     {/* Article Content */}
                     <article className="max-w-none">
-                        <HtmlRenderer className="prose prose-lg prose-blue max-w-none text-xl text-gray-800 leading-loose prose-p:mb-6 prose-headings:font-bold prose-headings:text-gray-900 prose-a:text-blue-600 hover:prose-a:text-blue-500 prose-img:rounded-xl [&_p]:mb-4 [&_img]:my-4 [&_img]:w-full [&_img]:h-auto [&_img]:object-cover" htmlString={article.content_html as string || ""} />
+                        <HtmlRenderer className="prose prose-lg prose-blue [&_p]:text-lg max-w-none text-xl text-gray-800 leading-loose prose-p:mb-6 prose-headings:font-bold prose-headings:text-gray-900 prose-a:text-blue-600 hover:prose-a:text-blue-500 prose-img:rounded-xl [&_p]:mb-4 [&_img]:my-4 [&_img]:w-full [&_img]:h-auto [&_img]:object-cover [&_h1]:text-3xl [&_h2]:text-2xl [&_h3]:text-xl [&_h4]:text-lg [&_h5]:text-base [&_h6]:text-sm [&_h1]:font-bold [&_h2]:font-bold [&_h3]:font-bold [&_h4]:font-bold [&_h5]:font-bold [&_h6]:font-bold [&_h1]:mb-2 [&_h2]:my-3 [&_h3]:my-4 [&_h4]:my-5 [&_h5]:my-6 [&_h6]:my-7" htmlString={article.content_html as string || ""} />
                     </article>
                 </div>
 

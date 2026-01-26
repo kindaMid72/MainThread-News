@@ -38,7 +38,7 @@ export default function CategoryPage({ response, page, limit, categorySlug }: Ca
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 min-h-screen">
-            <h1 className="text-4xl font-bold text-gray-900 mb-12 capitalize">{categorySlug.split('-')[0]}</h1>
+            <h1 className="text-4xl font-bold text-gray-900 mb-12 capitalize">{categorySlug.split('-').slice(0, -1).join(' ')}</h1>
 
             <div className="space-y-16">
                 {Object.entries(groupedArticles).map(([monthYear, groupArticles]) => (
