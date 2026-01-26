@@ -221,10 +221,10 @@ export default function LandingPage({ response }: { response: MainResponse }) {
                 <SubscribeCard />
 
                 <section className="mt-16 text-center border-t border-zinc-100 pt-8">
-                    <p className="text-zinc-400 text-sm">
-                        &copy; {new Date().getFullYear()} MainThread. All rights reserved. <br />
+                    <div className="text-zinc-400 text-sm">
+                        &copy; {new Date().getFullYear()} <MainThreadLogo className="text-[18px]! text-nowrap"/>. All rights reserved. <br />
                         <Link href="mailto:kingahmadilyas05@gmail.com" className="hover:text-zinc-900 transition-colors">kingahmadilyas05@gmail.com</Link>
-                    </p>
+                    </div>
                 </section>
 
             </main>
