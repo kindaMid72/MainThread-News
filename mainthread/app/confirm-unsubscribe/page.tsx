@@ -5,6 +5,7 @@ import MainThreadLogo from "@/components/MainThreadLogo";
 import api from '@/libs/axiosInterceptor/axiosPublicInterceptor';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { Suspense } from "react";
 
 export default function ConfirmUnsubscribe() {
     const searchParams = useSearchParams();
@@ -39,6 +40,8 @@ export default function ConfirmUnsubscribe() {
     };
 
     return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+
         <div className="min-h-screen z-50 bg-gray-50 flex flex-col items-center justify-center p-4">
             <div className="max-w-md w-full bg-white rounded-2xl p-8 text-center shadow-xl border border-gray-200">
                 <div className="flex justify-center mb-8">
@@ -102,5 +105,6 @@ export default function ConfirmUnsubscribe() {
                 )}
             </div>
         </div>
+        </Suspense>
     );
 }
