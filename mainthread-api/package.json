@@ -17,6 +17,7 @@
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.89.0",
     "@types/cors": "^2.8.19",
+    "@types/dotenv": "^6.1.1",
     "@types/express": "^5.0.6",
     "@types/multer": "^2.0.0",
     "@upstash/redis": "^1.35.8",
@@ -26,12 +27,14 @@
     "express": "^5.2.1",
     "multer": "^2.0.2",
     "nodemon": "^3.1.11",
-    "resend": "^6.6.0"
+    "resend": "^6.6.0",
+    "typescript": "^5.9.3"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
-    "@types/node": "^25.0.2",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "@types/node": "^25.0.10",
+    "i": "^0.3.7",
+    "npm": "^11.8.0",
+    "ts-node": "^10.9.2"
   }
 }
