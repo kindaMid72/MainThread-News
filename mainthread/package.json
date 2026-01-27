@@ -42,7 +42,7 @@
     "@fortawesome/fontawesome-free": "^7.1.0",
     "@tailwindcss/postcss": "^4",
     "@types/lodash.throttle": "^4.1.9",
-    "@types/node": "^20",
+    "@types/node": "^20.19.30",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
