@@ -4,9 +4,21 @@ import AllArticlePage from "@/features/public-sites/all-article/AllArticlePage";
 import api from '@/libs/axiosInterceptor/axiosPublicInterceptor'
 import {cache} from 'react';
 
-export const metadata = {
-    title: "MainThread Articles",
-    description: "All Articles in MainThread News",
+import {Metadata} from 'next';
+
+export async function generateMetadata({searchParams}: {searchParams: Promise<{page: string, limit?: string}>}): Promise<Metadata> {
+    const { page = '1', limit = '12' } = await searchParams;
+    return {
+        title: "MainThread Articles | Page " + page,
+        description: "All Articles in MainThread News | Page " + page,
+        robots: {
+            index: page == '1'? true : false, // index only first page
+            follow: true,
+        },
+        alternates: {
+            canonical: `/articles`,
+        }
+    };
 }
 
 const getAllArticles = cache(async (page: number, limit?: number) => {
