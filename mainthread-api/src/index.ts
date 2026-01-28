@@ -15,12 +15,12 @@ const allowedOrigins = [process.env.CLIENT_URL!];
 app.use(cors({
     origin: allowedOrigins,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    allowedHeaders: ['Content-Type', 'Authorization'],
     preflightContinue: false,
     optionsSuccessStatus: 204,
     credentials: true, 
 }));
 
-app.options('*', cors());
 
 app.use(express.json());
 
