@@ -36,7 +36,7 @@ axiosInterceptor.interceptors.request.use(async (config) => {
     const token = (await createClient().auth.getSession()).data.session?.access_token;
 
     config.headers.Authorization = `Bearer ${token}`;
-    config.headers.withCredentials = true; // insert access token from session store for request
+    // config.headers.withCredentials = true; // insert access token from session store for request
     return config;
 })
 

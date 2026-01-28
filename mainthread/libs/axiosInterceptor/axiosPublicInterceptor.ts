@@ -18,7 +18,7 @@ axiosInterceptor.interceptors.request.use(async (config) => {
     // if (!useAuthStore.getState().session?.access_token) await useAuthStore.getState().fetchSession(); // fetch sessio jika tidak ada token aktif
     // get access token from supabase session
 
-    config.headers.withCredentials = true; // insert access token from session store for request
+    // config.headers.withCredentials = true; // insert access token from session store for request
     return config;
 })
 
