@@ -12,7 +12,12 @@ const app = express();
 
 const allowedOrigins = [process.env.CLIENT_URL!];
 
-app.options('*', cors());
+app.options('*', cors(
+    // {
+    //     origin: allowedOrigins, // if need to send cookies, enable these lines
+    //     credentials: true,
+    // }
+));
 app.use(cors({
     origin: allowedOrigins,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',

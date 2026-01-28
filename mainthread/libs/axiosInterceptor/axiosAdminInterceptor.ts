@@ -13,7 +13,7 @@ let isRefreshing = false; // state for code refreshing, if an attempt had been m
 
 const axiosInterceptor = axios.create({
     baseURL: apiURL,
-    withCredentials: true
+    // withCredentials: true // setup cors policies if need to send cookies
 })
 
 function processQueue(error: any, token: any = null) {

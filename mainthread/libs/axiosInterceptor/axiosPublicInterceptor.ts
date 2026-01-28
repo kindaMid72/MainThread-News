@@ -8,7 +8,7 @@ const apiURL = process.env.NEXT_PUBLIC_SERVER_API_URL;
 
 const axiosInterceptor = axios.create({
     baseURL: apiURL,
-    withCredentials: true
+    // withCredentials: true // setup cors policies if need to send cookies
 })
 
 axiosInterceptor.interceptors.request.use(async (config) => {
