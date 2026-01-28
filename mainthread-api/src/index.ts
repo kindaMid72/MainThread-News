@@ -12,6 +12,7 @@ const app = express();
 
 const allowedOrigins = [process.env.CLIENT_URL!];
 
+app.options('*', cors());
 app.use(cors({
     origin: allowedOrigins,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
