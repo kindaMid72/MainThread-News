@@ -32,6 +32,13 @@ const fetchArticles = cache(async function fetchArticles() {
 export const metadata = {
   title: "MainThread",
   description: "MainThread News Website",
+  robots: {
+    index: true,
+    follow: true,
+  },
+  alternates: {
+    canonical: `/`,
+  }
 }
 export default async function Home() {
 

@@ -377,7 +377,7 @@ export default function ArticlesPage() {
                                                             <Edit className="w-4 h-4" />
                                                         </Link>
                                                         <Link // 'archived' | 'draft' | 'review' | 'published';
-                                                            href={`/admin/${params.userId}/articles/edit/${article.id}`}
+                                                            href={`/${article.slug}`}
                                                             target="_blank"
                                                             className="p-2 text-green-600 hover:bg-green-50 rounded transition-colors"
                                                             title="Preview"

@@ -4,6 +4,25 @@ import CategoryPage from "@/features/public-sites/categories/CategoryPage";
 // libs
 import api from "@/libs/axiosInterceptor/axiosPublicInterceptor";
 import { cache } from 'react';
+import { Metadata } from "next";
+
+export async function generateMetadata({ params, searchParams }: { params: Promise<{ categoryName: string }>, searchParams: Promise<{ page?: string, limit?: string }> }): Promise<Metadata> {
+    const { categoryName } = await params;
+    const { page = '1', limit = '12' } = await searchParams;
+
+    return {
+        title: categoryName.split('-').slice(0, -1).join(' ') + ' Articles | Page ' + page,
+        description: `Articles in ${categoryName.split('-').slice(0, -1).join(' ')}`,
+        robots: {
+            index: page == '1'? true : false, // index only first page
+            follow: true,
+        },
+        alternates: {
+            canonical: `/categories/${categoryName}`,
+        }
+
+    };
+}
 
 const getCategoryArticles = cache(async (categoryName: string, page: number, limit: number) => {
     try {

@@ -25,6 +25,10 @@ export async function generateMetadata({params}: any) {
     return {
         title: article.title,
         description: article.content_html,
+        robots: {
+            index: true,
+            follow: false,
+        },
     }
 }
 
