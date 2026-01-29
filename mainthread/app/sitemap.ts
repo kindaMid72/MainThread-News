@@ -1,7 +1,7 @@
 import { MetadataRoute } from "next";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-    const baseUrl = process.env.CLIENT_URL || 'https://www.mainthreadnews.site';
+    const baseUrl = process.env.CLIENT_URL || 'https://mainthreadnews.site';
     const apiUrl = process.env.NEXT_PUBLIC_SERVER_API_URL || 'http://localhost:3031';
 
     // Static routes
