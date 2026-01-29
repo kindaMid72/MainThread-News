@@ -1,5 +1,3 @@
-
-
 import LoginPage from "@/features/admin-sites/auth/LoginPage";
 
 export const metadata = {
