@@ -50,7 +50,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         const articleRoutes: MetadataRoute.Sitemap = articles.map((article: any) => ({
             url: `${baseUrl}/${article.slug}`,
             lastModified: article.updated_at ? new Date(article.updated_at) : new Date(),
-            changeFrequency: 'never',
+            changeFrequency: 'yearly',
             priority: 0.7,
         }));
 
