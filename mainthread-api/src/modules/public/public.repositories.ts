@@ -103,7 +103,7 @@ export async function getArticleContent(slug: string) {
 
         // set redis
         const newArticleKey = REDIS_KEY.ARTICLES(article.slug);
-        await redis.set(newArticleKey, article);
+        await redis.set(newArticleKey, article, { ex: 60 * 60 * 24 });
         return article;
     } catch (error) {
         throw error;

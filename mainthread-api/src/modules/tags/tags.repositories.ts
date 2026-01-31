@@ -20,7 +20,7 @@ export async function getAllTags(): Promise<TagQuery[]> {
 
         if (tagsError) throw new Error(tagsError.message);
 
-        await redis.set(REDIS_KEY.TAGS, tags);
+        await redis.set(REDIS_KEY.TAGS, tags, { ex: 60 * 60 * 24 });
 
         return tags;
     } catch (error) {

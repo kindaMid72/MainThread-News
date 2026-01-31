@@ -21,7 +21,7 @@ export async function getAllCategories(): Promise<CategoriesQuery[]> {
             
         if(categoriesError) throw new Error(`Error fetching categories: ${categoriesError}`);
 
-        await redis.set(REDIS_KEY.CATEGORIES, categories);
+        await redis.set(REDIS_KEY.CATEGORIES, categories, { ex: 60 * 60 * 24 });
         return categories as CategoriesQuery[];
     } catch (error) {
         throw new Error(`Error fetching categories: ${error}`);

@@ -32,7 +32,7 @@ export default async function checkAdminAccess(authorization: string | undefined
         if (error || !data) return false;
 
         // setup redis cache
-        await redis.set(REDIS_KEY.ADMIN_ID(userId), true);
+        await redis.set(REDIS_KEY.ADMIN_ID(userId), true, { ex: 60 * 60 * 24 });
 
         return true;
     } catch (error) {

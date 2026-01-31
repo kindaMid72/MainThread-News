@@ -42,7 +42,7 @@ export async function getAllUser() {
     if (error) return { error };
 
     // set redis cache
-    await redis.set(cacheKey, JSON.stringify(member));
+    await redis.set(cacheKey, JSON.stringify(member), { ex: 60 * 60 * 24 });
 
     return { data: member };
 }
