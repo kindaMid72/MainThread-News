@@ -1,19 +1,19 @@
-import dbAccess from '../../config/database/createDbAccess'
-import redis from '../../config/redis/createRedisAccess'
+import dbAccess from '../../config/database/createDbAccess';
+import redis from '../../config/redis/createRedisAccess';
 
 //types
-import { ArticleQuery, Article, ArticleImage } from './articles.types';
-import { TagQuery, Tag } from '../tags/tags.types';
+import { TagQuery } from '../tags/tags.types';
+import { ArticleQuery } from './articles.types';
 
-import {REDIS_KEY} from '../../const/const.redis'
+import { REDIS_KEY } from '../../const/const.redis';
 
 // utils
 import generateRandomToken from '../../utils/generator/generateRandomToken';
 
-export async function createArticleReturnId({authorId}: {authorId: string}) : Promise<string>{
+export async function createArticleReturnId({ authorId }: { authorId: string }): Promise<string> {
     try {
         const db = await dbAccess();
-        const value : ArticleQuery = {
+        const value: ArticleQuery = {
             title: '',
             slug: await generateRandomToken(),
             excerpt: null,
@@ -31,7 +31,7 @@ export async function createArticleReturnId({authorId}: {authorId: string}) : Pr
             updated_at: new Date().toISOString(),
 
         }
-        const {data: article, error} = await db
+        const { data: article, error } = await db
             .from('articles')
             .insert(
                 value
@@ -53,7 +53,7 @@ export async function createArticleReturnId({authorId}: {authorId: string}) : Pr
 
 // pagination cursor
 // - first page
-export async function getArticlesFirstPage({limit, category, status, asc, search}: {limit: number, category: string, status: string, asc: boolean, search?: string}): Promise<ArticleQuery[]> {
+export async function getArticlesFirstPage({ limit, category, status, asc, search }: { limit: number, category: string, status: string, asc: boolean, search?: string }): Promise<ArticleQuery[]> {
     try {
         const db = await dbAccess();
         // TODO: implement pagination back and forward with cursor implementation
@@ -74,18 +74,18 @@ export async function getArticlesFirstPage({limit, category, status, asc, search
             additionalCondition.push(statusCondition);
         }
 
-        if(categoryCondition !== ''){
+        if (categoryCondition !== '') {
             additionalCondition.push(categoryCondition);
         }
 
-        if(search != '' && search != null){
+        if (search != '' && search != null) {
             query = query.or(`title.ilike.%${search}%`);
         }
 
-        if(additionalCondition.length > 0){
+        if (additionalCondition.length > 0) {
             query = query.or(additionalCondition.join(','));
         }
-        const {data: articles, error} = await query;
+        const { data: articles, error } = await query;
 
         if (error) {
             console.error('Error getting articles:', error);
@@ -100,15 +100,15 @@ export async function getArticlesFirstPage({limit, category, status, asc, search
 }
 
 // - next page
-export async function getArticlesNextPage({cursor, limit, direction, category, status, asc, search}: {cursor: object, limit: number, direction: 'forward' | 'backward', category: string, status: string, asc: boolean, search?: string}) {
+export async function getArticlesNextPage({ cursor, limit, direction, category, status, asc, search }: { cursor: object, limit: number, direction: 'forward' | 'backward', category: string, status: string, asc: boolean, search?: string }) {
     try {
         const db = await dbAccess();
 
         // cursorNext: {id, createdAt}
-        const cursorNext = cursor as {id: string, createdAt: string};
+        const cursorNext = cursor as { id: string, createdAt: string };
 
         // TODO: implement pagination back and forward with cursor implementation
-        if(direction !== 'forward'){
+        if (direction !== 'forward') {
             throw new Error('Invalid direction');
         }
 
@@ -124,7 +124,7 @@ export async function getArticlesNextPage({cursor, limit, direction, category, s
             .limit(limit + 1)
             .order('created_at', { ascending: asc })
 
-        if(search != '' && search != null){
+        if (search != '' && search != null) {
             query = query.or(`title.ilike.%${search}%`);
         }
 
@@ -163,12 +163,12 @@ export async function getArticlesNextPage({cursor, limit, direction, category, s
 }
 
 // - previous page
-export async function getArticlesPreviousPage({cursor, limit, direction, category, status, asc, search}: {cursor: object, limit: number, direction: 'forward' | 'backward', category: string, status: string, asc: boolean, search?: string}) {
+export async function getArticlesPreviousPage({ cursor, limit, direction, category, status, asc, search }: { cursor: object, limit: number, direction: 'forward' | 'backward', category: string, status: string, asc: boolean, search?: string }) {
     try {
         const db = await dbAccess();
-        const cursorPrev = cursor as {id: string, createdAt: string};
+        const cursorPrev = cursor as { id: string, createdAt: string };
 
-        if(direction !== 'backward'){
+        if (direction !== 'backward') {
             throw new Error('Invalid direction');
         }
 
@@ -193,22 +193,22 @@ export async function getArticlesPreviousPage({cursor, limit, direction, categor
             query = query.gt('created_at', cursorPrev.createdAt);
         }
 
-        if(search != '' && search != null){
+        if (search != '' && search != null) {
             query = query.or(`title.ilike.%${search}%`);
         }
 
-        if(statusCondition !== ''){
+        if (statusCondition !== '') {
             additionalCondition.push(statusCondition);
         }
 
-        if(categoryCondition !== ''){
+        if (categoryCondition !== '') {
             additionalCondition.push(categoryCondition);
         }
 
-        if(additionalCondition.length > 0){
+        if (additionalCondition.length > 0) {
             query = query.or(additionalCondition.join(','));
         }
-        const {data: articles, error} = await query;
+        const { data: articles, error } = await query;
 
         if (error) {
             console.error('Error getting articles:', error);
@@ -235,7 +235,7 @@ export async function getArticleById(id: string): Promise<ArticleQuery> {
         }
 
         const db = await dbAccess();
-        const {data: article, error} = await db
+        const { data: article, error } = await db
             .from('articles')
             .select()
             .eq('id', id)
@@ -265,7 +265,7 @@ export async function getArticleTagsById(id: string): Promise<TagQuery[]> {
         }
 
         const db = await dbAccess();
-        const {data: articleTags, error} = await db
+        const { data: articleTags, error } = await db
             .from('article_tags')
             .select('tag_id')
             .eq('article_id', id);
@@ -297,9 +297,6 @@ export async function updateArticle(id: string, updates: Partial<ArticleQuery>):
             })
             .eq('id', id);
 
-        if(updates.slug){ // invalidate cache for slug
-            await redis.del(REDIS_KEY.ARTICLES(updates.slug));
-        }
 
         if (error) {
             console.error('Error updating article:', error);
@@ -307,7 +304,20 @@ export async function updateArticle(id: string, updates: Partial<ArticleQuery>):
         }
 
         // Invalidate cache
-        await redis.del(REDIS_KEY.ARTICLES(id));
+        redis.del(REDIS_KEY.ARTICLES(id));
+
+        // get slug by id and invalidate
+        const { data: article, error: slugError } = await db
+            .from('articles')
+            .select('slug')
+            .eq('id', id)
+            .single();
+        if (slugError) {
+            console.error('Error getting article slug:', slugError);
+            throw slugError;
+        }
+        await redis.del(REDIS_KEY.ARTICLES(article.slug));
+
     } catch (error) {
         console.error('Error updating article:', error);
         throw error;
@@ -319,7 +329,7 @@ export async function updateArticleTags(articleId: string, tagIds: string[]): Pr
         const db = await dbAccess();
 
         // 1. Delete existing tags for this article
-        const {error: deleteError} = await db
+        const { error: deleteError } = await db
             .from('article_tags')
             .delete()
             .eq('article_id', articleId);
@@ -339,7 +349,7 @@ export async function updateArticleTags(articleId: string, tagIds: string[]): Pr
             const { error: insertError } = await db
                 .from('article_tags')
                 .insert([
-                    ...newTags.map(tags=> ({
+                    ...newTags.map(tags => ({
                         article_id: articleId,
                         tag_id: tags.tag_id
                     }))
@@ -369,7 +379,7 @@ export async function deleteArticle(id: string): Promise<void> {
             .delete()
             .eq('article_id', id);
 
-        if(tagsError){
+        if (tagsError) {
             console.error('Error deleting article tags:', tagsError);
             throw tagsError;
         }
@@ -381,11 +391,11 @@ export async function deleteArticle(id: string): Promise<void> {
             .eq('id', id)
             .select();
 
-        if(deletedArticles){ // invalidate public slug
+        if (deletedArticles) { // invalidate public slug
             await redis.del(REDIS_KEY.ARTICLES(deletedArticles[0].slug));
         }
 
-        if(articleError){
+        if (articleError) {
             console.error('Error deleting article:', articleError);
             throw articleError;
         }
@@ -400,54 +410,54 @@ export async function deleteArticle(id: string): Promise<void> {
     }
 }
 
-export async function uploadImage(image: Buffer, path: string, metadata: {name?: string, type?: string, size?: number, path?: string, article_id?: string}): Promise<string> {
+export async function uploadImage(image: Buffer, path: string, metadata: { name?: string, type?: string, size?: number, path?: string, article_id?: string }): Promise<string> {
     // TODO: implement image upload, create an access url for that image, return the url    
     // 
     const TEN_YEARS = 10 * 365 * 24 * 60 * 60;
-    try{
+    try {
         const db = await dbAccess();
         // upload image to supabase storage
-        const {error} = await db.storage.from('images').upload(path, image, {
-            contentType: metadata?.type || 'image/jpeg',    
+        const { error } = await db.storage.from('images').upload(path, image, {
+            contentType: metadata?.type || 'image/jpeg',
             upsert: false
         });
-        if(error){
+        if (error) {
             console.error('Error uploading image:', error);
             throw error;
         }
-        
+
         // create iamge url
 
-        const {data: imageUrl, error: urlError} = await db.storage.from('images').createSignedUrl(path, TEN_YEARS);
-        if(urlError){
+        const { data: imageUrl, error: urlError } = await db.storage.from('images').createSignedUrl(path, TEN_YEARS);
+        if (urlError) {
             console.error('Error creating image url:', urlError);
             throw urlError;
         }
 
         const finalUrl = imageUrl?.signedUrl as string;
-        
-        // insert image url & metadata to media_images
-            const { data: insertedImage, error: insertError } = await db
-                .from('media_images')
-                .insert([
-                    {
-                        image_url: finalUrl,
-                        metadata: metadata,
-                        article_id: metadata.article_id
-                    }
-                ])
-                .select()
-                .single();
 
-        if(insertError){
+        // insert image url & metadata to media_images
+        const { data: insertedImage, error: insertError } = await db
+            .from('media_images')
+            .insert([
+                {
+                    image_url: finalUrl,
+                    metadata: metadata,
+                    article_id: metadata.article_id
+                }
+            ])
+            .select()
+            .single();
+
+        if (insertError) {
             console.error('Error inserting image:', insertError);
             throw insertError;
         }
         // return image url
-    
+
         return finalUrl;
 
-    }catch(error){
+    } catch (error) {
         throw new Error('Error uploading image: ' + error);
     }
 }
