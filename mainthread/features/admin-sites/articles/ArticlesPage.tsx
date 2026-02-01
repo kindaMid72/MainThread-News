@@ -103,6 +103,36 @@ export default function ArticlesPage() {
         setIsLoadingEdit(false);
     };
 
+    const handleCreateAIArticle = async () => {
+        setIsLoadingEdit(true);
+        const response = await api.post('/api/admin/automatic-news/create-automatic-news');
+        console.log(response);
+        if (response.status === 201) {
+            // extract id
+            const data: ArticleQuery = response.data;
+            const id: string = data.id as string;
+            setPopUpMessage({
+                title: 'Success',
+                message: 'Article created successfully',
+                type: 'success',
+                duration: 2000,
+                onClose: () => { }
+            });
+            router.push(`/admin/${params.userId}/articles/edit/${id}`); // fetch by edit page after created and redirect to edit page
+        } else {
+            setIsErrorEdit(true);
+            setPopUpMessage({
+                title: 'Error',
+                message: 'Failed to create article',
+                type: 'error',
+                duration: 2000,
+                onClose: () => { }
+            });
+            return;
+        }
+        setIsLoadingEdit(false);
+    };
+
     const initialFetch = async () => {
         try {
             setIsLoadingFetch(true);
@@ -212,21 +242,29 @@ export default function ArticlesPage() {
 
     return (
         <div className="p-6">
-
-
-
             <div className="mb-8">
                 <div className="flex items-center justify-between mb-4">
                     <div>
                         <h1 className="text-3xl mb-2 font-bold text-gray-900">Manage Articles</h1>
                         <p className="text-gray-600">Manage all articles in the system</p>
                     </div>
-                    <div
-                        onClick={handleCreateNewArticle}
-                        className="flex items-center gap-2 cursor-pointer bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
-                    >
-                        <Plus className="w-5 h-5" />
-                        Create New Article
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={handleCreateNewArticle}
+                            disabled={isLoadingEdit}
+                            className={`flex items-center gap-2 cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors ${isLoadingEdit ? 'opacity-70 cursor-not-allowed' : ''}`}
+                        >
+                            {isLoadingEdit ? <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div> : <Plus className="w-5 h-5" />}
+                            Create New Article
+                        </button>
+                        <button
+                            onClick={handleCreateAIArticle}
+                            disabled={isLoadingEdit}
+                            className={`flex items-center gap-2 cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors ${isLoadingEdit ? 'opacity-70 cursor-not-allowed' : ''}`}
+                        >
+                            {isLoadingEdit ? <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div> : <Plus className="w-5 h-5" />}
+                            Create Automatic Article
+                        </button>
                     </div>
                 </div>
 

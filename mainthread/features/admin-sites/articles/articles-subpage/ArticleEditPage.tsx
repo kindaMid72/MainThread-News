@@ -333,6 +333,7 @@ export default function ArticleEditPage() {
                     onCancel={() => setIsDeleteConfirmOpen(false)}
                     delayCancel={false}
                     delayConfirm={true}
+                    delaySecond={2}
                     confirmColor='red'
                 />
             )}
