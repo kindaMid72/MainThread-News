@@ -249,20 +249,22 @@ export default function ArticlesPage() {
                         <p className="text-gray-600">Manage all articles in the system</p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <div
+                        <button
                             onClick={handleCreateNewArticle}
-                            className="flex items-center gap-2 cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                            disabled={isLoadingEdit}
+                            className={`flex items-center gap-2 cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors ${isLoadingEdit ? 'opacity-70 cursor-not-allowed' : ''}`}
                         >
-                            <Plus className="w-5 h-5" />
+                            {isLoadingEdit ? <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div> : <Plus className="w-5 h-5" />}
                             Create New Article
-                        </div>
-                        <div
+                        </button>
+                        <button
                             onClick={handleCreateAIArticle}
-                            className="flex items-center gap-2 cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                            disabled={isLoadingEdit}
+                            className={`flex items-center gap-2 cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors ${isLoadingEdit ? 'opacity-70 cursor-not-allowed' : ''}`}
                         >
-                            <Plus className="w-5 h-5" />
+                            {isLoadingEdit ? <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div> : <Plus className="w-5 h-5" />}
                             Create Automatic Article
-                        </div>
+                        </button>
                     </div>
                 </div>
 

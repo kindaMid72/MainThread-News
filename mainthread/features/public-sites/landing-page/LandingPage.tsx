@@ -124,7 +124,7 @@ export default function LandingPage({ response }: { response: MainResponse }) {
                     <div className="lg:col-span-3 order-3 border-l border-zinc-100 pl-0 lg:pl-8 space-y-8">
                         <div className="flex items-center gap-2 mb-6">
                             <TrendingUp className="w-4 h-4 text-zinc-900" />
-                            <h3 className="font-bold text-sm tracking-widest uppercase text-zinc-900">Trending Now</h3>
+                            <h3 className="font-bold text-sm tracking-widest uppercase text-zinc-900">Latest News</h3>
                         </div>
 
                         <div className="flex flex-col gap-0 divide-y divide-zinc-100">
