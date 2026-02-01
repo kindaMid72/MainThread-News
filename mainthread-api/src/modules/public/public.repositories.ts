@@ -82,17 +82,17 @@ export async function getArticleContent(slug: string) {
         const cachedArticle: ArticleQuery | null = await redis.get(redisKey);
         if (cachedArticle) {
             // increment views
-            const {data: viewCount, error: viewCountError} = await db.from('articles').select('view_count').eq('slug', slug).single();
-            if(viewCount){
-                const { data: views, error: viewsError } = await db.from('articles').update({ view_count: viewCount.view_count + 1 }).eq('slug', slug).select('*');
-            }
+            // const {data: viewCount, error: viewCountError} = await db.from('articles').select('view_count').eq('slug', slug).single();
+            // if(viewCount){
+            //     const { data: views, error: viewsError } = await db.from('articles').update({ view_count: viewCount.view_count + 1 }).eq('slug', slug).select('*');
+            // }
             return cachedArticle;
         }
         
         let { data: article, error: articleError } = await db.from('articles').select('*').eq('slug', slug).eq('status', 'published').single();
 
         // increment views
-        const { data: views, error: viewsError } = await db.from('articles').update({ view_count: article.view_count + 1 }).eq('slug', slug).select('*');
+        // const { data: views, error: viewsError } = await db.from('articles').update({ view_count: article.view_count + 1 }).eq('slug', slug).select('*');
         // get name of author
         const { data: users, error: usersError } = await db.from('users_access').select('user_id, name').eq('user_id', article.author_id);
         article.author_id = users?.find((user) => user.user_id === article.author_id)?.name;
@@ -103,7 +103,7 @@ export async function getArticleContent(slug: string) {
 
         // set redis
         const newArticleKey = REDIS_KEY.ARTICLES(article.slug);
-        await redis.set(newArticleKey, article, { ex: 60 * 60 * 24 });
+        await redis.set(newArticleKey, article, { ex: 60 * 60 * 3 }); // 3 hours
         return article;
     } catch (error) {
         throw error;
@@ -305,6 +305,25 @@ export async function updateUserPassword(email: string, password: string) {
             throw updateError;
         }
 
+    } catch (error) {
+        throw error;
+    }
+}
+
+export async function incrementViews(slug: string): Promise<void> {
+    try {
+        const db = await dbAccess();
+        // get the most recent update, dont get from redis cache
+        const { data: article, error: articleError } = await db.from('articles').select('view_count').eq('slug', slug).eq('status', 'published').single();
+        if (articleError || !article) {
+            console.log('error from public repository incrementViews: ', articleError);
+            throw articleError;
+        }
+        const { error } = await db.from('articles').update({ view_count: article.view_count + 1 }).eq('slug', slug);
+        if (error) {
+            console.log('error from public repository incrementViews: ', error);
+            throw error;
+        }
     } catch (error) {
         throw error;
     }

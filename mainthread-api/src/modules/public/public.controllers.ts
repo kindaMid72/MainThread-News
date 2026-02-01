@@ -6,7 +6,7 @@ import { ArticleQuery } from "./public.types";
 // utils
 
 // services
-import { forgotPasswordService, getAllArticlesService, getAllCategoriesService, getArticleContentService, getCategoryArticlesService, getMainPageContentService, resetPasswordService, searchArticlesService } from "./public.services";
+import { forgotPasswordService, getAllArticlesService, getAllCategoriesService, getArticleContentService, getCategoryArticlesService, getMainPageContentService, incrementViewsService, resetPasswordService, searchArticlesService } from "./public.services";
 
 const router = express.Router();
 
@@ -126,5 +126,16 @@ router.post('/reset-password', async (req, res) => {
         return res.status(500).json({ message: "Internal Server Error" });
     }
 });
+
+router.put('/increment-views/:slug', async (req, res) => {
+    try {
+        const { slug } = req.params;
+        const result = await incrementViewsService(slug);
+        return res.status(200).json(result);
+    } catch (error) {
+        console.log('error from public controller /increment-views: ', error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+})
 
 export default router;

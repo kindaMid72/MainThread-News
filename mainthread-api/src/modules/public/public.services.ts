@@ -8,7 +8,7 @@ import { checkUserExist, invalidateToken, storeResetPasswordToken, updateUserPas
 import { ArticleQuery } from "./public.types";
 
 // repositories
-import { getAllArticles, getArticleContent, getCategoriesArticles, getMainPageContent, searchArticles } from "./public.repositories";
+import { getAllArticles, getArticleContent, getCategoriesArticles, getMainPageContent, searchArticles, incrementViews } from "./public.repositories";
 
 // emailer
 import Emailer from '../../config/emailer/emailerInstance';
@@ -166,6 +166,16 @@ export async function resetPasswordService({ token, password }: { token: string,
 
     } catch (error) {
         console.log('error from public service resetPasswordService: ', error);
+        throw error;
+    }
+}
+
+export async function incrementViewsService(slug: string) {
+    try {
+        await incrementViews(slug);
+        return true;
+    } catch (error) {
+        console.log('error from public service incrementViewsService: ', error);
         throw error;
     }
 }
