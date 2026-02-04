@@ -4,8 +4,6 @@ import LandingPage from "@/features/public-sites/landing-page/LandingPage";
 
 import api from '@/libs/axiosInterceptor/axiosPublicInterceptor';
 
-import { cache } from 'react';
-
 import { ArticleQuery } from "@/types/Public.type";
 interface MainResponse {
     data: {
@@ -16,7 +14,7 @@ interface MainResponse {
     }
 }
 
-const fetchArticles = cache(async function fetchArticles() {
+const fetchArticles = async function fetchArticles() {
   try {
     const response = await api.get("/api/public/get-main-page-content");
     return {
@@ -27,7 +25,7 @@ const fetchArticles = cache(async function fetchArticles() {
     console.error("Failed to fetch articles", error);
     return null;
   }
-});
+};
 
 export const metadata = {
   title: "MainThread",

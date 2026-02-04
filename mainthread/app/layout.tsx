@@ -1,6 +1,7 @@
 import '@fortawesome/fontawesome-free/css/all.min.css'; // import awesome font
 import type { Metadata } from "next";
 
+import StructuredData from "@/components/StructuredData";
 import { Geist, Geist_Mono, Lora, Newsreader, Tinos } from "next/font/google";
 import "./globals.css";
 
@@ -50,6 +51,7 @@ export default function RootLayout({
       <body
         className={`${lora.variable} antialiased`}
       >
+        <StructuredData />
         <div className="min-h-full">
           {children}
         </div>
