@@ -42,11 +42,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: "mainThread",
     description: "mainThread News Website",
-    url: process.env.CLIENT_URL,
+    url: `${process.env.CLIENT_URL}`,
     siteName: "mainThread",
     images: [
       {
-        url: "/logo.png",
+        url: `${process.env.CLIENT_URL}/logo.png`,
         width: 512,
         height: 512,
         alt: "mainThread",
