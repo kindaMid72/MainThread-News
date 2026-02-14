@@ -34,7 +34,7 @@ const lora = Lora({
 });
 
 export const metadata: Metadata = {
-  title: "mainThread",
+  title: "mainThreadnews ",
   description: "mainThread News Website",
   icons: {
     icon: "/logo.png",

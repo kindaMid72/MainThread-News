@@ -24,12 +24,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             priority: 0.5,
             changeFrequency: 'daily', // Changed to daily as per requirement
         },
-        {
-            url: `${baseUrl}/categories`,
-            lastModified: new Date(),
-            priority: 0.5,
-            changeFrequency: 'weekly', // Changed to weekly as per requirement
-        },
     ];
 
     try {

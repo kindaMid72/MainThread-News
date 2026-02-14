@@ -30,8 +30,8 @@ const fetchArticles = async function fetchArticles() {
 };
 
 export const metadata = {
-  title: "MainThread",
-  description: "MainThread News Website",
+  title: "mainThread news",
+  description: "MainThread News Website landing page",
   robots: {
     index: true,
     follow: true,

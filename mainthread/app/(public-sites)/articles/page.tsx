@@ -7,7 +7,11 @@ import {cache} from 'react';
 import {Metadata} from 'next';
 
 export async function generateMetadata({searchParams}: {searchParams: Promise<{page: string, limit?: string}>}): Promise<Metadata> {
-    const { page = '1', limit = '12' } = await searchParams;
+    let { page = '1', limit = '10' } = await searchParams;
+    if(!page || !limit){
+        page = '1';
+        limit = '12';
+    }
     return {
         title: "MainThread Articles | Page " + page,
         description: "All Articles in MainThread News | Page " + page,
@@ -15,9 +19,6 @@ export async function generateMetadata({searchParams}: {searchParams: Promise<{p
             index: page == '1'? true : false, // index only first page
             follow: true,
         },
-        alternates: {
-            canonical: `/articles`,
-        }
     };
 }
 
@@ -28,8 +29,8 @@ const getAllArticles = cache(async (page: number, limit?: number) => {
 })
 export default async function AllArticles({searchParams}: {searchParams: Promise<{page: string, limit?: string}>}) {
     // TODO: implement ssr for all article page, config url first
-    const page: number = Number((await searchParams).page); // FIXME: ini undefined
-    const limit: number | undefined = Number((await searchParams).limit);
+    let page: number  = Number((await searchParams).page || 1); 
+    let limit: number | undefined = Number((await searchParams).limit || 10);
 
     const articles = await getAllArticles(page, limit);
 

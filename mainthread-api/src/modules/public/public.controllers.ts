@@ -63,7 +63,7 @@ router.get('/get-category-articles/:categoryId', async (req, res) => {
 router.get('/get-all-articles', async (req, res) => { // TODO: implement pagination with cursor (this on still use page and limit)
     try {
         const page = parseInt(req.query.page as string) || 1;
-        const limit = parseInt(req.query.limit as string) || 12;
+        const limit = parseInt(req.query.limit as string) || 10;
 
         const result = await getAllArticlesService(page, limit);
         return res.status(200).json(result);

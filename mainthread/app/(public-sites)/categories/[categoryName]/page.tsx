@@ -8,14 +8,19 @@ import { Metadata } from "next";
 
 export async function generateMetadata({ params, searchParams }: { params: Promise<{ categoryName: string }>, searchParams: Promise<{ page?: string, limit?: string }> }): Promise<Metadata> {
     const { categoryName } = await params;
-    const { page = '1', limit = '12' } = await searchParams;
+    let { page = '1', limit = '10' } = await searchParams;
+
+    if(!page || !limit){
+        page = '1';
+        limit = '10';
+    }
 
     return {
         title: categoryName.split('-').slice(0, -1).join(' ') + ' Articles | Page ' + page,
         description: `Articles in ${categoryName.split('-').slice(0, -1).join(' ')}`,
         robots: {
-            index: page == '1'? true : false, // index only first page
-            follow: true,
+            index: false, // index only first page
+            follow: false,
         },
         alternates: {
             canonical: `/categories/${categoryName}`,
@@ -36,7 +41,12 @@ const getCategoryArticles = cache(async (categoryName: string, page: number, lim
 
 export default async function Category({ params, searchParams }: { params: Promise<{ categoryName: string }>, searchParams: Promise<{ page?: string, limit?: string }> }) {
     const { categoryName } = await params;
-    const { page = '1', limit = '12' } = await searchParams;
+    let { page, limit } = await searchParams;
+
+    if(!page || !limit){
+        page = '1';
+        limit = '10';
+    }
 
     const pageNumber = Number(page);
     const limitNumber = Number(limit);
