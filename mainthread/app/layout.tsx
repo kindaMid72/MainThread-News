@@ -37,7 +37,7 @@ export const metadata: Metadata = {
   title: "mainThread",
   description: "mainThread News Website",
   icons: {
-    icon: "/favicon.ico",
+    icon: "/logo.png",
   },
   openGraph: {
     title: "mainThread",
