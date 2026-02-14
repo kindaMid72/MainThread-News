@@ -10,6 +10,8 @@ interface Props {
     params: Promise<{articleSlug: string}>;
 }
 
+export const dynamic = "force-dynamic";
+
 // metadata ssr
 const getArticle = cache(async (slug: string) => {
     const articleResponse = await api.get(`/api/public/get-article-content/${slug}`);
