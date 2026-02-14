@@ -25,9 +25,6 @@ export async function getMainPageContentService(): Promise<{ latestNews: Article
 
         let { latestNews, headline, breakingNews, categories }: { latestNews: ArticleQuery[], headline: ArticleQuery[], breakingNews: ArticleQuery[], categories: any[] } = await getMainPageContent();
 
-        // TODO: config author id name (change to author_id to its name), edit select to exclude content_html
-        // FIXME: fix date format (why its acting that way)
-
         // fetch categories articles
         if(categories.length > 0) {
             const categoriesArticles = await Promise.all(categories.map((category) => getCategoriesArticles(category.id)));

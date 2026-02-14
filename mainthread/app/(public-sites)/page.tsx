@@ -4,6 +4,8 @@ import LandingPage from "@/features/public-sites/landing-page/LandingPage";
 
 import api from '@/libs/axiosInterceptor/axiosPublicInterceptor';
 
+export const dynamic = "force-dynamic";
+
 import { ArticleQuery } from "@/types/Public.type";
 interface MainResponse {
     data: {
