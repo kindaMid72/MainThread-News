@@ -37,7 +37,7 @@ export const metadata = {
     follow: true,
   },
   alternates: {
-    canonical: `/`,
+    canonical: `/`
   }
 }
 export default async function Home() {

@@ -18,7 +18,6 @@ const getArticle = cache(async (slug: string) => {
     return articleResponse.data;
 });
 
-
 export async function generateMetadata({params}: any) {
     const slug = (await params).articleSlug;
 
@@ -31,6 +30,9 @@ export async function generateMetadata({params}: any) {
             index: true,
             follow: false,
         },
+        alternates: {
+            canonical: `/${slug}`
+        }
     }
 }
 

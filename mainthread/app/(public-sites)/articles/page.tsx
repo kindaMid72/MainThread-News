@@ -19,6 +19,9 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
             index: page == '1' ? true : false, // index only first page
             follow: true,
         },
+        alternates: {
+            canonical: `/articles?page=${page}&limit=${limit}`
+        }
     };
 }
 

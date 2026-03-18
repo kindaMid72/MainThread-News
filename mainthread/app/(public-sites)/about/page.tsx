@@ -8,6 +8,9 @@ export const metadata = {
         index: true,
         follow: true,
     },
+    alternates: {
+        canonical: `/about`
+    }
 };
 
 export default function About() {
